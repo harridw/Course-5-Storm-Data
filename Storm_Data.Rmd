@@ -12,6 +12,46 @@ Due to the different types, and serverity, of weather experienced throughout a c
 
 We will be using data provided by the National Oceanic and Atmospheric Administration (NOAA) to help answer these questions.  Economic consequences are measured by the amount of damage, property and/or crop, that is associated with each event type.  The population health hazard is measured by the number of fatalities and/or injuries with an event.  The number of fatalities will be the primary metric for determining the population health hazard.
 
+### Data Processing  
+A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
+
+##### Read zipped csv file into R
+```{r read_storm_data, include = TRUE}
+StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ",",
+                        quote = "\"", dec = ".", na.strings = c("NA", "NaN", " ", ""))
+
+##### A quick overview of the data in this file:
+dim(StormData)
+
+str(StormData)
+```
+
+##### Create Econonmic Consequencences metric for each event, event type & refnum
+To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an example, the dollar amounts for property damage are expressed in different denomiations (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure so that dollars can be combined, or summed, for different levels of aggregation, as appropriate.
+```{r data_processing, include = TRUE}
+StormData$economic <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
+                              ifelse(StormData$PROPDMGEXP == "M", 1000000,
+                              ifelse(StormData$PROPDMGEXP == "B", 1000000000, 1))) +
+                        StormData$CROPDMG * ifelse(StormData$CROPDMGEXP == "K", 1000,
+                              ifelse(StormData$CROPDMGEXP == "M", 1000000,
+                              ifelse(StormData$CROPDMGEXP == "B", 1000000000, 1)))
+```
+
+##### Define 
+A second area that requires some clean-up are the dates and times at the beginning and 
+end of an event.  From documentation provided by the National Westher Service, some notes about the time of an event,
+
+"In general, the time of an event, as it appears in the header-strip, is the time when 
+the event reached locally, regionally, or nationally established advisory or warning criteria (exceptions defined in Section 2.3.1). The event time could be the single time that a peak wind gust of 65 knots (75 mph) occurred, or it could be beginning and ending times of a 10-minute shower of large, damaging hailstones. If the time of the event in 
+the header-strip is a broad guesstimate,then it should be indicated as such in the event narrative."
+
+For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided
+
+
+
+
+
+
 
 
 
