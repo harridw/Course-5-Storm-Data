@@ -1,7 +1,7 @@
 ---
 title: "Economic Consequences & Population Health Hazards of Severe Weather"
 author: "EHarris"
-date: "6/04/2017"
+date: "6/05/2017"
 output: 
   html_document: 
     keep_md: yes
@@ -18,7 +18,7 @@ ipak <- function(pkg){
 
 ### Package Usage
 packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2",
-                  "scales", "reshape2", "knitr", "cacher")
+                  "scales", "reshape2", "knitr", "cacher", "stringr")
 ipak(packages)
 ```
 
@@ -33,7 +33,7 @@ A first step to our analysis is reading the data into R from the working directo
 ##### Read zipped csv file into R
 ```{r read_storm_data, include = TRUE, cache = TRUE}
 StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ",",
-                        quote = "\"", dec = ".", na.strings = c("NA", "NaN", " ", ""))
+                        quote = "\"", dec = ".")
 
 ##### A quick overview of the data in this file:
 dim(StormData)
@@ -43,7 +43,7 @@ str(StormData)
 
 ##### Create Econonmic Consequencences metric for each event, event type & refnum
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an example, the dollar amounts for property damage are expressed in different denomiations (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure so that dollars can be combined, or summed, for different levels of aggregation, as appropriate.
-```{r data_processing, include = TRUE}
+```{r economic_measure, include = TRUE}
 StormData$economic <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
                               ifelse(StormData$PROPDMGEXP == "M", 1000000,
                               ifelse(StormData$PROPDMGEXP == "B", 1000000000, 1))) +
@@ -62,8 +62,19 @@ the header-strip is a broad guesstimate,then it should be indicated as such in t
 
 For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided.  In addition to converting BGN_DATE to a date format, we are adding a 'YEAR' column.
 ```{r event_dates, include = TRUE}
-StormData$BGN_DATE <- mdy(StormData$BGN_DATE)
+
+StormData$BGN_DATE <- mdy_hms(StormData$BGN_DATE)
 StormData$BGN_YEAR <- year(StormData$BGN_DATE)
+
+hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
+minute <- substr(StormData$BGN_TIME, 3, 4)
+ampm <- ifelse(hour > 12, "PM", "AM")
+zone <- StormData$TIME_ZONE
+hour <- substr(paste("00", hour, sep = ""),min(length(hour)+1,3),min(length(hour)+2, 4))
+
+time_hm <- strptime(paste(hour, ":", minute, " ", ampm, sep = ""),
+                        format = "%I:%M %p", tz = "")
+StormData$BGN_TIME <- struc
 ```
 
 ## Item 1: Code for reading in the dataset and/or processing the data
