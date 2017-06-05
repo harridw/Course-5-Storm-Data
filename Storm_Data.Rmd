@@ -44,12 +44,13 @@ str(StormData)
 ##### Create Econonmic Consequencences metric for each event, event type & refnum
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an example, the dollar amounts for property damage are expressed in different denomiations (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure so that dollars can be combined, or summed, for different levels of aggregation, as appropriate.
 ```{r economic_measure, include = TRUE}
-StormData$economic <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
+StormData$PROPDMG <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
                               ifelse(StormData$PROPDMGEXP == "M", 1000000,
-                              ifelse(StormData$PROPDMGEXP == "B", 1000000000, 1))) +
-                        StormData$CROPDMG * ifelse(StormData$CROPDMGEXP == "K", 1000,
+                              ifelse(StormData$PROPDMGEXP == "B", 1000000000, 1)))
+StormData$CROPDMG <- StormData$CROPDMG * ifelse(StormData$CROPDMGEXP == "K", 1000,
                               ifelse(StormData$CROPDMGEXP == "M", 1000000,
                               ifelse(StormData$CROPDMGEXP == "B", 1000000000, 1)))
+StormData$ECONOMIC <- StormData$PROPDMG + StormData$CROPDMG
 ```
 
 ##### Define period for aggregating measurement data, population health & economic
@@ -61,27 +62,36 @@ the event reached locally, regionally, or nationally established advisory or war
 the header-strip is a broad guesstimate,then it should be indicated as such in the event narrative."
 
 For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided.  In addition to converting BGN_DATE to a date format, we are adding a 'YEAR' column.
+
+As END_DATE and END_TIME are infrequently populated, these variables will not be used in our analysis.  This also minimizes the need to further process the variables.
 ```{r event_dates, include = TRUE}
+StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
+StormData$BGN_YEAR <- format(StormData$BGN_DATE, "%Y")
+StormData$hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
+StormData$minute <- substr(StormData$BGN_TIME, 3, 4)
+StormData$ampm <- ifelse(StormData$hour > 12, "PM", "AM")
+StormData$hour <- ifelse(StormData$hour > 12, StormData$hour - 12, 
+                              ifelse(StormData$hour < 1, 12, StormData$hour))
+StormData$hour <- substr(paste("00", StormData$hour, sep = ""), 
+                         min(length(StormData$hour)+1,3),min(length(StormData$hour)+2, 4))
 
-StormData$BGN_DATE <- mdy_hms(StormData$BGN_DATE)
-StormData$BGN_YEAR <- year(StormData$BGN_DATE)
-
-hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
-minute <- substr(StormData$BGN_TIME, 3, 4)
-ampm <- ifelse(hour > 12, "PM", "AM")
-zone <- StormData$TIME_ZONE
-hour <- substr(paste("00", hour, sep = ""),min(length(hour)+1,3),min(length(hour)+2, 4))
-
-time_hm <- strptime(paste(hour, ":", minute, " ", ampm, sep = ""),
-                        format = "%I:%M %p", tz = "")
-StormData$BGN_TIME <- struc
+StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ", 
+                                                      StormData$ampm, sep = "")
 ```
 
-## Item 1: Code for reading in the dataset and/or processing the data
-###   Step 1: Read csv file into R
-```{r fileload, include = TRUE}
-activity <- read.csv("activity.csv", header = TRUE, sep = ',',
-                              colClasses = c("numeric", "character", "integer"))
+##### Defining the location or area for an event
+There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE -- that are well-populated and could be used to support analysis by location.  Only these 4 variables are included in final, tidy,  dataset to be used for analysis.  Other location related variables are sparsely populated.
+
+##### Final data set to be used for analysis
+We will not be keeping many of the poorly populated variables provided in the zip file we received.  They do not lend themselves to a further understanding of the questions for analysis.
+
+The final processing of the dataset is to limit the final dataset to data to BGN_Dates on or after "1980-01-01".  Although data captures events as early as 1950, there have been significant shifts in population density and development that may distort results by including the earlier years.
+```{r subset_storm_data, include = TRUE}
+subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
+                       STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
+                       FATALITIES, INJURIES, PROPDMG, CROPDMG, ECONOMIC)
+
+subStormData <- subset(subStormData, BGN_YEAR > "1979")
 ```
 
 ###   Step 2: Process data to address other parts of assignment
