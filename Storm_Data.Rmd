@@ -7,6 +7,21 @@ output:
     keep_md: yes
 ---
 
+## Load anticipated packages to be used throughout Course 5 Project 1
+```{r setup, include=FALSE}
+ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+      if (length(new.pkg)) 
+            install.packages(new.pkg, dependencies = TRUE)
+      sapply(pkg, require, character.only = TRUE)
+}
+
+### Package Usage
+packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2",
+                  "scales", "reshape2", "knitr", "cacher")
+ipak(packages)
+```
+
 ### Analysis Synopsis
 Due to the different types, and serverity, of weather experienced throughout a country, there is a desire to understand weather events that create the greatest economic consequences or most hazardous with respect to population health.  
 
@@ -16,7 +31,7 @@ We will be using data provided by the National Oceanic and Atmospheric Administr
 A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
 
 ##### Read zipped csv file into R
-```{r read_storm_data, include = TRUE}
+```{r read_storm_data, include = TRUE, cache = TRUE}
 StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ",",
                         quote = "\"", dec = ".", na.strings = c("NA", "NaN", " ", ""))
 
@@ -37,7 +52,7 @@ StormData$economic <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 10
                               ifelse(StormData$CROPDMGEXP == "B", 1000000000, 1)))
 ```
 
-##### Define 
+##### Define period for aggregating measurement data, population health & economic
 A second area that requires some clean-up are the dates and times at the beginning and 
 end of an event.  From documentation provided by the National Westher Service, some notes about the time of an event,
 
@@ -45,29 +60,10 @@ end of an event.  From documentation provided by the National Westher Service, s
 the event reached locally, regionally, or nationally established advisory or warning criteria (exceptions defined in Section 2.3.1). The event time could be the single time that a peak wind gust of 65 knots (75 mph) occurred, or it could be beginning and ending times of a 10-minute shower of large, damaging hailstones. If the time of the event in 
 the header-strip is a broad guesstimate,then it should be indicated as such in the event narrative."
 
-For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided
-
-
-
-
-
-
-
-
-
-## Load anticipated packages to be used throughout Course 5 Project 1
-```{r setup, include=FALSE}
-ipak <- function(pkg){
-      new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-      if (length(new.pkg)) 
-            install.packages(new.pkg, dependencies = TRUE)
-      sapply(pkg, require, character.only = TRUE)
-}
-
-### Package Usage
-packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2",
-                  "scales", "reshape2", "knitr")
-ipak(packages)
+For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided.  In addition to converting BGN_DATE to a date format, we are adding a 'YEAR' column.
+```{r event_dates, include = TRUE}
+StormData$BGN_DATE <- mdy(StormData$BGN_DATE)
+StormData$BGN_YEAR <- year(StormData$BGN_DATE)
 ```
 
 ## Item 1: Code for reading in the dataset and/or processing the data
