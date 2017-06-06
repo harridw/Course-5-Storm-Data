@@ -1,7 +1,7 @@
 ---
 title: "Economic Consequences & Population Health Hazards of Severe Weather"
 author: "EHarris"
-date: "6/05/2017"
+date: "6/06/2017"
 output: 
   html_document: 
     keep_md: yes
@@ -17,8 +17,8 @@ ipak <- function(pkg){
 }
 
 ### Package Usage
-packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2",
-                  "scales", "reshape2", "knitr", "cacher", "stringr")
+packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2", "scales",
+                  "reshape2", "knitr", "R.cache", "stringr", "gtools", "quantreg")
 ipak(packages)
 ```
 
@@ -86,7 +86,7 @@ There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE -- that are
 We will not be keeping many of the poorly populated variables provided in the zip file we received.  They do not lend themselves to a further understanding of the questions for analysis.
 
 The final processing of the dataset is to limit the final dataset to data to BGN_Dates on or after "1980-01-01".  Although data captures events as early as 1950, there have been significant shifts in population density and development that may distort results by including the earlier years.
-```{r subset_storm_data, include = TRUE}
+```{r subset_storm_data, include = TRUE, cache = TRUE}
 subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
                        FATALITIES, INJURIES, PROPDMG, CROPDMG, ECONOMIC)
@@ -94,20 +94,31 @@ subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZON
 subStormData <- subset(subStormData, BGN_YEAR > "1979")
 ```
 
-###   Step 2: Process data to address other parts of assignment
-```{r iniital_processing, include = TRUE}
-activity$date <- strptime(activity$date, "%Y-%m-%d")
-activity$day <- weekdays(activity$date)
-activity$daytype <- ifelse(activity$day %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
-activity <- select(activity, daytype, day, date, interval, steps)
-dates <- as.data.frame(as.Date(unique(activity$date)))
-colnames(dates)[1] <- "date"
-daterange = c(seq(min(dates$date), max(dates$date), by = 6))
+### Evaluating the Economic Consequences & Hazards to Population Health  
+
+```{r event-impact_over_time, include = TRUEfig.keep = "all", 
+                              fig.show = "asis", fig.path = 'figure/'}
+event.economic <- aggregate(ECONOMIC ~ BGN_YEAR + EVTYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.economic$ECONOMIC_THSND = as.numeric(round(event.economic$ECONOMIC/1000, digit = 2))
+event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVTYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.injury <- aggregate(INJURIES ~ BGN_YEAR + EVTYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+theme_update(plot.title = element.text(hjust = 0.5))
+ggplot(event.economic, aes(x = factor(BGN_YEAR), y = ECONOMIC_THSND, colour = EVTYPE)) +
+      geom_line() +
+      geom_point() +
+      labs(title = "Economic Consequences of Weather Event") +
+      labs(x = "Measurement Year", y = "Economic Cost")
 ```
 
-## Item 2. Histogram of the total number of steps taken each day.  Two steps:  
-### Step 1: Calculate total steps each day (remove missing, NA, values for steps) 
-```{r total_steps_per_day, include = TRUE}
+
+
+
+
 activity.clean <- subset(activity, !is.na(steps))
 steps.a.day <- aggregate(activity.clean$steps, 
                         list(date = as.Date(activity.clean$date)), sum)
@@ -117,10 +128,7 @@ colnames(steps.a.day) <- c("date", "steps")
 ### Step 2: Plot histogram reflecting total number of steps per day
 ```{r steps_per_day_hist, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
 theme_update(plot.title = element_text(hjust = 0.5))
-ggplot(steps.a.day, aes(x = steps)) +
-      geom_histogram(binwidth = 1000, fill = "blue") +
-      labs(title = "Total Steps per Day") +
-      labs(x = "Steps a Day", y = "Frequency (# Days)")
+
 ```
 
 ## Item 3a: Mean & Median steps per day (excludes missing, NA, values)
