@@ -90,13 +90,66 @@ The final processing of the dataset is to limit the final dataset to data to BGN
 subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
                        FATALITIES, INJURIES, PROPDMG, CROPDMG, ECONOMIC)
+subStormData$ECONOMIC_MILL <- round(subStormData$ECONOMIC/1000000, digit = 2)
 
 subStormData <- subset(subStormData, BGN_YEAR > "1979")
 ```
 
-### Evaluating the Economic Consequences & Hazards to Population Health  
+### Evaluating the Economic Consequences and Hazards to Population Health of Weather Events
+Using the available data, we have determined that our metric to assess the event type  
+generating the greatest 'economonic consequence' is the combined cost for property damage  
+(PROPDMG) and crop damage (CROPDMG).  The number of fatalities, captured by 'FATALITIES'  
+variable in the data, will be used to measure the hazard to population health.  Although  
+we   recognize that injuries are, at a minimum, a contributing hazard to population  
+health, it is difficult, likely impossible, to develop comparison to a fatality (e.g. 5  
+injuries = 1 fatality).  If two event types have the same number of fatalities, the number  
+of injuries may be considered for determing the greater hazard.  
 
-```{r event-impact_over_time, include = TRUEfig.keep = "all", 
+As previously noted, our analysis includes data for events with a BGN_DATE of 1/1/1980  
+or later.  The objective is to better reflect more current population density and  
+development levels in various market.  This allows us to reflect, for example, the higher  
+cost or hazard in coastal regions due to hurricanes.  
+
+When stating which 'Event Type' 
+
+##### Calculations of key metrics noted above
+```{r event_impact_metrics, include = TRUE}
+event.economic.sum <- aggregate(ECONOMIC_MILL ~ EVTYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.economic.sum <- event.economic.sum[order(event.economic.sum$ECONOMIC_MILL,
+                                               decreasing = TRUE),]
+event.economic.sum$ROW_INDX <- seq(along = event.economic.sum$EVTYPE)
+event.economic.sum$EVENT_CTGY <- ifelse(event.economic.sum$ROW_INDX < 21,
+                                          paste(event.economic.sum$EVTYPE), "OTHER EVENT")
+
+event.economic.mean <- aggregate(ECONOMIC_MILL ~ EVTYPE, data = subStormData, 
+                                    FUN = function(x) mean=mean(x))
+event.economic.mean <- event.economic.mean[order(event.economic.mean$ECONOMIC_MILL,
+                                               decreasing = TRUE),]
+event.economic.mean$ROW_INDX <- seq(along = event.economic.mean$EVTYPE)
+event.economic.mean$EVENT_CTGY <- ifelse(event.economic.mean$ROW_INDX < 21,
+                                          paste(event.economic.mean$EVTYPE), "OTHER EVENT")
+
+
+event.fatality.sum <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.fatality.sum <- event.fatality.sum[order(event.fatality.sum$FATALITIES,
+                                               decreasing = TRUE),]
+event.fatality.sum$ROW_INDX <- seq(along = event.fatality.sum$EVTYPE)
+event.fatality.sum$EVENT_CTGY <- ifelse(event.fatality.sum$ROW_INDX < 21,
+                                          paste(event.fatality.sum$EVTYPE), "OTHER EVENT")
+
+event.fatality.mean <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
+                                    FUN = function(x) mean=mean(x))
+event.fatality.mean <- event.fatality.mean[order(event.fatality.mean$FATALITIES,
+                                               decreasing = TRUE),]
+event.fatality.mean$ROW_INDX <- seq(along = event.fatality.mean$EVTYPE)
+event.fatality.mean$EVENT_CTGY <- ifelse(event.fatality.mean$ROW_INDX < 21,
+                                          paste(event.fatality.mean$EVTYPE), "OTHER EVENT")
+```
+
+### Evaluating the Economic Consequences & Hazards to Population Health
+```{r event_impact_over_time, include = TRUE, fig.keep = "all", 
                               fig.show = "asis", fig.path = 'figure/'}
 event.economic <- aggregate(ECONOMIC ~ BGN_YEAR + EVTYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
@@ -117,170 +170,3 @@ ggplot(event.economic, aes(x = factor(BGN_YEAR), y = ECONOMIC_THSND, colour = EV
 
 
 
-
-
-activity.clean <- subset(activity, !is.na(steps))
-steps.a.day <- aggregate(activity.clean$steps, 
-                        list(date = as.Date(activity.clean$date)), sum)
-colnames(steps.a.day) <- c("date", "steps")
-```
-
-### Step 2: Plot histogram reflecting total number of steps per day
-```{r steps_per_day_hist, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-theme_update(plot.title = element_text(hjust = 0.5))
-
-```
-
-## Item 3a: Mean & Median steps per day (excludes missing, NA, values)
-```{r mean_median_steps_per_day, include = TRUE}
-meansteps <- mean(steps.a.day$steps, na.rm = TRUE)
-mediansteps <- median(steps.a.day$steps, na.rm = TRUE)
-mean.median.steps <- data.frame("Mean Steps" = meansteps, "Median Steps" = mediansteps)
-mean.median.steps
-```
-
-## Item 4a: Time series (day of week) plot of the average number of steps taken
-```{r mean_steps_day_of_week, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-mean.steps.day <- aggregate(steps ~ day, data = activity, 
-                                    FUN = function(x) mean=mean(x))
-mean.steps.day$day <- factor(mean.steps.day$day,
-                        levels = c("Monday", "Tuesday", "Wednesday", "Thursday",
-                                   "Friday","Saturday", "Sunday"))
-
-theme_update(plot.title = element_text(hjust = 0.5))
-qplot(x = day, y = steps, data = mean.steps.day, group = 7,  
-      geom = c("point", "line"),
-      xlab = "Day of Week", ylab = "Average Number of Steps",
-      main = "Average Steps for each Day of Week")
-```
-
-
-## Item 4b: Time series (5-minute interval) plot of the average number of steps taken
-```{r mean_steps_5min_interval, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-mean.steps.interval <- aggregate(steps ~ interval, data = activity.clean, 
-                                    FUN = function(x) mean=mean(x))
-
-theme_update(plot.title = element_text(hjust = 0.5))
-qplot(x = interval, y = steps, data = mean.steps.interval, group = 288,  
-      geom = c("point", "line"),
-      xlab = "5-Minute Interval", ylab = "Average Number of Steps",
-      main = "Average Steps for each 5-Minute Interval")
-```
-
-## Item 5: 5-munite interval with maximum average number of steps  
-```
-Identifying the 5-minute interval with the highest average number of steps is  
-performed in 3 steps.  Step 1 calculates the average number of steps for each  
-5-minute interval.  Theser results are then sorted in decreasing order based  
-on average number of steps, Step 2.  The final step, Step 3, is selecting the  
-first row, which represents the highest average steps -- interval 835 with  
-average steps = 206.1698.
-```
-### R Code performing each of these steps
-```{r mean_steps_each5, include = TRUE}
-steps.each.5min <- aggregate(steps ~ interval, data = activity,
-                                    FUN = function(x) meansteps=mean(x))
-steps.each.5min <- steps.each.5min[order(steps.each.5min$steps, decreasing = TRUE),]
-steps.each.5min[1,]
-```
-
-## Item 6: Code to describe and show a strategy for imputing missing data
-```
-To impute a value that best reflects a missign value there are two parameters  
-to be considered: 1) day of week and 2) interval.  We will replace each  
-missing value with applicable imputed value.  
-```
-### Step 1: Calculate the mean steps for each day of week + interval combination  
-#### NOTE:  Results are rounded, create integer, as partial steps are not counted.
-```{r mean_steps_day_interval, include = TRUE}
-mean.day.interval <- aggregate(steps ~ day + interval, data = activity,
-                              FUN = function(x) mean=round(mean(x), digits = 0))
-mean.day.interval <- select(mean.day.interval, day, interval, steps)
-```
-
-### Step 2: Identify missing values then replace with the imputed value.  
-```
-This, too, is completed in multiple steps.  The first step is to subset  
-the missing values from observations with values.  A second step is to replace  
-missing values with imputed values.  The final step is to combine the data  
-sets with imputed values to those observations with actula values.  
-```
-
-#### Step 2a: Create data subsets, missing values and non-missing values
-##### Missing values in data set activity.isna will be replaced by imputed values
-```{r subset_missing, include = TRUE}
-activity.isna <- subset(activity, is.na(steps))
-activity.isna <- select(activity.isna, daytype, day, date, interval)
-activity.isna <- activity.isna[order(activity.isna[,3],
-                                         activity.isna[,4]),]
-
-head(activity.isna)
-```
-
-#### Step 2b: Replace missign values with imputed values (merge function)
-```{r subset_replace_missing, include = TRUE}
-activity.impute <- merge(activity.isna, mean.day.interval, by = c("day","interval"))
-activity.impute <- activity.impute[order(activity.impute$date,
-                                         activity.impute$interval),]
-
-head(activity.impute)
-```
-
-#### Step 2c: Combine, rbind(), imputed observations with actual observations
-```{r combine_impute_actual, include = TRUE}
-activity.total <- rbind(activity.clean, activity.impute)
-activity.total <- activity.total[order(activity.total[,3], activity.total[,4]),]
-```
-
-#### Step 2d: Mean / Median steps after including imputed values
-```{r impute_mean_median_steps_day, include = TRUE}
-steps.impute.day <- aggregate(activity.total$steps, 
-                        list(date = as.Date(activity.total$date)), sum)
-colnames(steps.impute.day) <- c("date", "steps")
-meansteps2 <- mean(steps.impute.day$steps, na.rm = TRUE)
-mediansteps2 <- median(steps.impute.day$steps, na.rm = TRUE)
-mean.median.steps2 <- data.frame("Mean Steps" = meansteps, "Median Steps" = mediansteps)
-mean.median.steps2
-```
-
-## Item 7: Histogram of total steps each day after missing values are imputed
-```
-This is done in two steps.  The first step is simply calculating the total  
-number of steps for each day.  The second, and final, step is creating a  
-histogram of the number of steps for each day.  
-```
-
-### Step 1: Calculate total number of steps for each day, including imputed
-```{r total_steps_with_imputed, include = TRUE}
-impute.total.steps <- aggregate(activity.total$steps, 
-                        list(date = as.Date(activity.total$date)), sum)
-colnames(impute.total.steps) <- c("date", "steps")
-```
-
-### Step 2: Plot histogram reflecting total number of steps per day
-```{r impute_steps_day_hist, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-theme_update(plot.title = element_text(hjust = 0.5))
-ggplot(impute.total.steps, aes(x = steps)) +
-      geom_histogram(binwidth = 1000, fill = "blue") +
-      labs(title = "Total Steps per Day") +
-      labs(x = "Steps a Day", y = "Frequency (# Days)")
-```
-
-### Item 8: Panel plot of average number of steps per 5-minute interval  
-#### A comparison of weekdays and weekend
-```{r panel_plot, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-mean.steps.daytype <- aggregate(steps ~ daytype + interval, data = activity,
-                                                FUN = function(x) mean=mean(x))
-mean.wday <- subset(mean.steps.daytype, daytype == "Weekday")
-mean.wend <- subset(mean.steps.daytype, daytype == "Weekend")
-min.yrange <- round(min(mean.steps.daytype$steps),0)
-max.yrange <- round(max(mean.steps.daytype$steps),0)
-yrange <- range(seq(from = min.yrange, to = max.yrange, by = 50))
-par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
-plot(mean.wday$interval, mean.wday$steps, pch = 20, type = "l",
-                        xlim = range(0,2500), ylim = yrange, xlab = "Interval", 
-                        ylab = "Avg Number of Steps", main = "Weekday")
-plot(mean.wend$interval, mean.wend$steps, pch = 20, type = "l",
-                        xlim = range(0,2500), ylim = yrange, xlab = "Interval",
-                        ylab = "Avg Number of Steps", main = "Weekend")
-```
