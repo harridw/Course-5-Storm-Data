@@ -22,15 +22,15 @@ packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2", "
 ipak(packages)
 ```
 
-### Analysis Synopsis
+## Analysis Synopsis
 Due to the different types, and serverity, of weather experienced throughout a country, there is a desire to understand weather events that create the greatest economic consequences or most hazardous with respect to population health.  
 
 We will be using data provided by the National Oceanic and Atmospheric Administration (NOAA) to help answer these questions.  Economic consequences are measured by the amount of damage, property and/or crop, that is associated with each event type.  The population health hazard is measured by the number of fatalities and/or injuries with an event.  The number of fatalities will be the primary metric for determining the population health hazard.
 
-### Data Processing  
+## Data Processing  
 A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
 
-##### Read zipped csv file into R
+#### Read zipped csv file into R
 ```{r read_storm_data, include = TRUE, cache = TRUE}
 StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ",",
                         quote = "\"", dec = ".")
@@ -40,6 +40,83 @@ dim(StormData)
 
 str(StormData)
 ```
+
+#### Subset the data
+The size of the dataset provided is rather large, but much of the data is not very useful 
+to answering the stated questions, or goals.  The following steps are taken to subset the 
+dataset to the variables, and dates, that are relevent to the analysis.  This subset 
+also facilitates the effort to clean-up the data for further review and analysis.
+
+##### Date / time variables
+There are two areas for clean-up, or defining subset, of the original file with respect 
+to dates and/or times provided.  Key to these decisions to include or remove is whether 
+the information supports the analysis.
+
+The first step is evaluating the quality of the data.  For each EVTYPE and REFNUM, a 
+unique reporting instance provided in data file, a BGN_DATE, BGN_TIME, END_DATE, and 
+END_TIME.  The BGN_DATE, BGN_TIME, along with a TIME_ZONE are consistently populated.  
+This is not true for END_DATE and END_TIME.  As there is not a good way to populate or 
+impute appropriate values, these variables provide little value towards analyziing the 
+event types in the dataset.  These veariables, therefore, will be removed from subset.
+```{r missing_end_dates, include = TRUE, echo = FALSE}
+no.missing <- sum(ifelse(StormData$END_DATE %in% c("", " ", "NA", "NaN"), 1, 0))
+pct.missing <- sum(ifelse(StormData$END_DATE %in% c("", " ", "NA", "NaN"), 1,0))/
+                                                            length(StormData$END_DATE)
+```
+For END_DATE, there are `r no.missing` missing dates, or `r pct.missing` percent of total.
+
+The other consideration for dates / times is relevance of the data.  The data includes 
+dates between 1950 - 2011.  Because of shifting populations over time the data for events 
+prior to 1990 are not as relevant to evaluating the economic consequences or hazards to 
+population health represented by an event. Data for dates prior to 1990 are removed from 
+the subset.
+
+##### Format dates to exclude experience prior to 1990
+```{r event_dates, include = TRUE}
+StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
+StormData$BGN_YEAR <- format(StormData$BGN_DATE, "%Y")
+StormData$hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
+StormData$minute <- substr(StormData$BGN_TIME, 3, 4)
+StormData$ampm <- ifelse(StormData$hour > 12, "PM", "AM")
+StormData$hour <- ifelse(StormData$hour > 12, StormData$hour - 12, 
+                              ifelse(StormData$hour < 1, 12, StormData$hour))
+StormData$hour <- substr(paste("00", StormData$hour, sep = ""), 
+                         min(length(StormData$hour)+1,3),min(length(StormData$hour)+2, 4))
+
+StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ", 
+                                                      StormData$ampm, sep = "")
+```
+NOTE:  Although BGN_TIME & TIME_ZONE are not critical to analysis, they will be included 
+in the subset of the data.
+
+##### Defining the location or area for an event
+There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  
+that are well-populated and could be used to support analysis by location.  Only these 4  
+variables are included in final, tidy,  dataset to be used for analysis.  Other location  
+related variables are sparsely populated.
+
+NOTE:  Location is not used in the final analysis for determining the event type with the 
+greatest economic consequences or hazard to population health.  Results will evaluated 
+across all markets combined.
+
+#### Creating the subset
+We will not be keeping many of the poorly populated variables provided in the zip file  
+we received.  They do not lend themselves to a further understanding of the questions  
+for analysis.  
+
+The final processing of the dataset is to limit the final dataset to data to BGN_Dates  
+on or after "1990-01-01".  Although data captures events as early as 1950, there have  
+been significant shifts in population density and development that may distort results  
+by including the earlier years.
+```{r subset_storm_data, include = TRUE, cache = TRUE}
+subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
+                       STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
+                       FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
+subStormData <- subset(subStormData, BGN_YEAR > "1989")
+subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
+                                    subStormData$EVTYPE, subStormData$BGN_DATE),]
+```
+
 
 ##### Create Econonmic Consequencences metric for each event, event type & REFNUM
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
@@ -68,44 +145,9 @@ the header-strip is a broad guesstimate,then it should be indicated as such in t
 For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided.  In addition to converting BGN_DATE to a date format, we are adding a 'YEAR' column.
 
 As END_DATE and END_TIME are infrequently populated, these variables will not be used in our analysis.  This also minimizes the need to further process the variables.
-```{r event_dates, include = TRUE}
-StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
-StormData$BGN_YEAR <- format(StormData$BGN_DATE, "%Y")
-StormData$hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
-StormData$minute <- substr(StormData$BGN_TIME, 3, 4)
-StormData$ampm <- ifelse(StormData$hour > 12, "PM", "AM")
-StormData$hour <- ifelse(StormData$hour > 12, StormData$hour - 12, 
-                              ifelse(StormData$hour < 1, 12, StormData$hour))
-StormData$hour <- substr(paste("00", StormData$hour, sep = ""), 
-                         min(length(StormData$hour)+1,3),min(length(StormData$hour)+2, 4))
 
-StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ", 
-                                                      StormData$ampm, sep = "")
-```
 
-##### Defining the location or area for an event
-There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  
-that are well-populated and could be used to support analysis by location.  Only these 4  
-variables are included in final, tidy,  dataset to be used for analysis.  Other location  
-related variables are sparsely populated.
 
-##### Final data set to be used for analysis
-We will not be keeping many of the poorly populated variables provided in the zip file  
-we received.  They do not lend themselves to a further understanding of the questions  
-for analysis.  
-
-The final processing of the dataset is to limit the final dataset to data to BGN_Dates  
-on or after "1980-01-01".  Although data captures events as early as 1950, there have  
-been significant shifts in population density and development that may distort results  
-by including the earlier years.
-```{r subset_storm_data, include = TRUE, cache = TRUE}
-subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
-                       STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
-                       FATALITIES, INJURIES, PROPDMG, CROPDMG, ECONOMIC)
-subStormData$ECONOMIC_MILL <- dollar(round(subStormData$ECONOMIC/1000000, digit = 3))
-
-subStormData <- subset(subStormData, BGN_YEAR > "1979")
-```
 
 ### Evaluating the Economic Consequences and Hazards to Population Health of Events
 Using the available data, we have determined that our metric to assess the event type  
@@ -133,38 +175,32 @@ event type.  Is the list of top 20 event types different?
 
 ##### Calculations of key metrics noted above
 ```{r event_impact_metrics, include = TRUE}
-event.economic.sum <- aggregate(ECONOMIC_MILL ~ EVTYPE, data = subStormData, 
+event.economic.sum <- aggregate(ECONOMIC ~ EVTYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
-event.economic.sum <- event.economic.sum[order(event.economic.sum$ECONOMIC_MILL,
+event.economic.sum <- event.economic.sum[order(event.economic.sum$ECONOMIC,
                                                decreasing = TRUE),]
-event.economic.sum$ROW_INDX <- seq(along = event.economic.sum$EVTYPE)
-event.economic.sum$EVENT_CTGY <- ifelse(event.economic.sum$ROW_INDX < 21,
-                                          paste(event.economic.sum$EVTYPE), "OTHER EVENT")
+event.economic.sum20 <- event.economic.sum[1:20,]
+event.economic.sum20$MCOST <- dollar(round(event.economic.sum20$ECONOMIC/1000000, digits = 3)) 
 
-event.economic.mean <- aggregate(ECONOMIC_MILL ~ EVTYPE, data = subStormData, 
+event.economic.mean <- aggregate(ECONOMIC ~ EVTYPE, data = subStormData, 
                                     FUN = function(x) mean=mean(x))
-event.economic.mean <- event.economic.mean[order(event.economic.mean$ECONOMIC_MILL,
+event.economic.mean <- event.economic.mean[order(event.economic.mean$ECONOMIC,
                                                decreasing = TRUE),]
-event.economic.mean$ROW_INDX <- seq(along = event.economic.mean$EVTYPE)
-event.economic.mean$EVENT_CTGY <- ifelse(event.economic.mean$ROW_INDX < 21,
-                                          paste(event.economic.mean$EVTYPE), "OTHER EVENT")
+event.economic.mean20 <- event.economic.mean[1:20,]
+event.economic.mean20$MCOST <- round(event.economic.mean20$ECONOMIC/1000000, digits = 3) 
 
 
 event.fatality.sum <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 event.fatality.sum <- event.fatality.sum[order(event.fatality.sum$FATALITIES,
                                                decreasing = TRUE),]
-event.fatality.sum$ROW_INDX <- seq(along = event.fatality.sum$EVTYPE)
-event.fatality.sum$EVENT_CTGY <- ifelse(event.fatality.sum$ROW_INDX < 21,
-                                          paste(event.fatality.sum$EVTYPE), "OTHER EVENT")
+event.fatality.sum20 <- event.fatality.sum[1:20,]
 
 event.fatality.mean <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
                                     FUN = function(x) mean=mean(x))
 event.fatality.mean <- event.fatality.mean[order(event.fatality.mean$FATALITIES,
                                                decreasing = TRUE),]
-event.fatality.mean$ROW_INDX <- seq(along = event.fatality.mean$EVTYPE)
-event.fatality.mean$EVENT_CTGY <- ifelse(event.fatality.mean$ROW_INDX < 21,
-                                          paste(event.fatality.mean$EVTYPE), "OTHER EVENT")
+event.fatality.mean20 <- event.fatality.mean[1:20,]
 ```
 
 ##### Plot results for each of the top 20 Event Types
