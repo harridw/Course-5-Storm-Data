@@ -41,8 +41,12 @@ dim(StormData)
 str(StormData)
 ```
 
-##### Create Econonmic Consequencences metric for each event, event type & refnum
-To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an example, the dollar amounts for property damage are expressed in different denomiations (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure so that dollars can be combined, or summed, for different levels of aggregation, as appropriate.
+##### Create Econonmic Consequencences metric for each event, event type & REFNUM
+To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
+example, the dollar amounts for property damage are expressed in different denomiations  
+(e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
+so that dollars can be combined, or summed, for different levels of aggregation, as  
+appropriate.
 ```{r economic_measure, include = TRUE}
 StormData$PROPDMG <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
                               ifelse(StormData$PROPDMGEXP == "M", 1000000,
@@ -80,27 +84,35 @@ StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ",
 ```
 
 ##### Defining the location or area for an event
-There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE -- that are well-populated and could be used to support analysis by location.  Only these 4 variables are included in final, tidy,  dataset to be used for analysis.  Other location related variables are sparsely populated.
+There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  
+that are well-populated and could be used to support analysis by location.  Only these 4  
+variables are included in final, tidy,  dataset to be used for analysis.  Other location  
+related variables are sparsely populated.
 
 ##### Final data set to be used for analysis
-We will not be keeping many of the poorly populated variables provided in the zip file we received.  They do not lend themselves to a further understanding of the questions for analysis.
+We will not be keeping many of the poorly populated variables provided in the zip file  
+we received.  They do not lend themselves to a further understanding of the questions  
+for analysis.  
 
-The final processing of the dataset is to limit the final dataset to data to BGN_Dates on or after "1980-01-01".  Although data captures events as early as 1950, there have been significant shifts in population density and development that may distort results by including the earlier years.
+The final processing of the dataset is to limit the final dataset to data to BGN_Dates  
+on or after "1980-01-01".  Although data captures events as early as 1950, there have  
+been significant shifts in population density and development that may distort results  
+by including the earlier years.
 ```{r subset_storm_data, include = TRUE, cache = TRUE}
 subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
                        FATALITIES, INJURIES, PROPDMG, CROPDMG, ECONOMIC)
-subStormData$ECONOMIC_MILL <- round(subStormData$ECONOMIC/1000000, digit = 2)
+subStormData$ECONOMIC_MILL <- dollar(round(subStormData$ECONOMIC/1000000, digit = 3))
 
 subStormData <- subset(subStormData, BGN_YEAR > "1979")
 ```
 
-### Evaluating the Economic Consequences and Hazards to Population Health of Weather Events
+### Evaluating the Economic Consequences and Hazards to Population Health of Events
 Using the available data, we have determined that our metric to assess the event type  
 generating the greatest 'economonic consequence' is the combined cost for property damage  
 (PROPDMG) and crop damage (CROPDMG).  The number of fatalities, captured by 'FATALITIES'  
 variable in the data, will be used to measure the hazard to population health.  Although  
-we   recognize that injuries are, at a minimum, a contributing hazard to population  
+we recognize that injuries are, at a minimum, a contributing hazard to population  
 health, it is difficult, likely impossible, to develop comparison to a fatality (e.g. 5  
 injuries = 1 fatality).  If two event types have the same number of fatalities, the number  
 of injuries may be considered for determing the greater hazard.  
@@ -108,9 +120,16 @@ of injuries may be considered for determing the greater hazard.
 As previously noted, our analysis includes data for events with a BGN_DATE of 1/1/1980  
 or later.  The objective is to better reflect more current population density and  
 development levels in various market.  This allows us to reflect, for example, the higher  
-cost or hazard in coastal regions due to hurricanes.  
+cost or hazard in coastal states due to hurricanes.  
 
-When stating which 'Event Type' 
+When stating which 'Event Type' has the greatest economic consequence the statement is  
+based on the total economic cost, property damage + crop damage, for each event over the  
+entire period, 1980 - 2011.  Similarly, the total number of fatalities is used to  
+determine the event type presenting the greatest hazard to population health.
+
+NOTE:  Because some event types may occur with less frequency, but greater impact for each  
+occurrence we have included a mean, or average, economic cost and fatalities of each  
+event type.  Is the list of top 20 event types different?
 
 ##### Calculations of key metrics noted above
 ```{r event_impact_metrics, include = TRUE}
@@ -148,19 +167,28 @@ event.fatality.mean$EVENT_CTGY <- ifelse(event.fatality.mean$ROW_INDX < 21,
                                           paste(event.fatality.mean$EVTYPE), "OTHER EVENT")
 ```
 
-### Evaluating the Economic Consequences & Hazards to Population Health
-```{r event_impact_over_time, include = TRUE, fig.keep = "all", 
-                              fig.show = "asis", fig.path = 'figure/'}
-event.economic <- aggregate(ECONOMIC ~ BGN_YEAR + EVTYPE, data = subStormData, 
-                                    FUN = function(x) sum=sum(x))
-event.economic$ECONOMIC_THSND = as.numeric(round(event.economic$ECONOMIC/1000, digit = 2))
-event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVTYPE, data = subStormData, 
-                                    FUN = function(x) sum=sum(x))
-event.injury <- aggregate(INJURIES ~ BGN_YEAR + EVTYPE, data = subStormData, 
-                                    FUN = function(x) sum=sum(x))
-
-par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+##### Plot results for each of the top 20 Event Types
+```{r plot_metrics_by_event, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 theme_update(plot.title = element.text(hjust = 0.5))
+qplot(BGN_YEAR, ECONOMIC_MILL, data = event.economic.sum, color = EVTYPE, 
+                  geom = c("point", "smooth"),
+                  main = "Total Economic Consequence by Event (1980 - 2011)", 
+                  xlab = "Measurement Year", ylab = "Total Cost (in Millions)")
+qplot(BGN_YEAR, ECONOMIC_MILL, data = event.economic.mean, color = EVTYPE, 
+                  geom = c("point", "smooth"),
+                  main = "Average Economic Consequence per Occurrence (1980 - 2011)", 
+                  xlab = "Measurement Year", ylab = "Average Cost (in Millions)")
+qplot(BGN_YEAR, FATALITIES, data = event.fatalities.sum, color = EVTYPE, 
+                  geom = c("point", "smooth"),
+                  main = "Total Fatalities by Event (1980 - 2011)", 
+                  xlab = "Measurement Year", ylab = "Total Fatalities")
+qplot(BGN_YEAR, FATALITIES, data = event.fatalities.mean, color = EVTYPE, 
+                  geom = c("point", "smooth"),
+                  main = "Average Fatalities per Occurrence (1980 - 2011)", 
+                  xlab = "Measurement Year", ylab = "Average Fatalities")
+
+
 ggplot(event.economic, aes(x = factor(BGN_YEAR), y = ECONOMIC_THSND, colour = EVTYPE)) +
       geom_line() +
       geom_point() +
