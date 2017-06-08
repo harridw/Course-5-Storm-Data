@@ -52,6 +52,15 @@ There are two areas for clean-up, or defining subset, of the original file with 
 to dates and/or times provided.  Key to these decisions to include or remove is whether 
 the information supports the analysis.
 
+** An overview of event time from the National Weather Service:  
+"In general, the time of an event, as it appears in the header-strip, is the time when 
+the event reached locally, regionally, or nationally established advisory or warning 
+criteria (exceptions defined in Section 2.3.1). The event time could be the single time 
+that a peak wind gust of 65 knots (75 mph) occurred, or it could be beginning and ending 
+times of a 10-minute shower of large, damaging hailstones. If the time of the event in 
+the header-strip is a broad guesstimate,then it should be indicated as such in the event 
+narrative."
+
 The first step is evaluating the quality of the data.  For each EVTYPE and REFNUM, a 
 unique reporting instance provided in data file, a BGN_DATE, BGN_TIME, END_DATE, and 
 END_TIME.  The BGN_DATE, BGN_TIME, along with a TIME_ZONE are consistently populated.  
@@ -117,7 +126,6 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
                                     subStormData$EVTYPE, subStormData$BGN_DATE),]
 ```
 
-
 ##### Create Econonmic Consequencences metric for each event, event type & REFNUM
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
 example, the dollar amounts for property damage are expressed in different denomiations  
@@ -125,29 +133,64 @@ example, the dollar amounts for property damage are expressed in different denom
 so that dollars can be combined, or summed, for different levels of aggregation, as  
 appropriate.
 ```{r economic_measure, include = TRUE}
-StormData$PROPDMG <- StormData$PROPDMG * ifelse(StormData$PROPDMGEXP == "K", 1000,
-                              ifelse(StormData$PROPDMGEXP == "M", 1000000,
-                              ifelse(StormData$PROPDMGEXP == "B", 1000000000, 1)))
-StormData$CROPDMG <- StormData$CROPDMG * ifelse(StormData$CROPDMGEXP == "K", 1000,
-                              ifelse(StormData$CROPDMGEXP == "M", 1000000,
-                              ifelse(StormData$CROPDMGEXP == "B", 1000000000, 1)))
-StormData$ECONOMIC <- StormData$PROPDMG + StormData$CROPDMG
+subStormData$PROPDMG <- subStormData$PROPDMG * ifelse(subStormData$PROPDMGEXP 
+                                                            %in% c("h","H"), 100,
+                        ifelse(subStormData$PROPDMGEXP %in% c("k", "K"), 1000,
+                        ifelse(subStormData$PROPDMGEXP %in% c("m", "M"), 1000000,
+                        ifelse(subStormData$PROPDMGEXP %in% c("b", "B"), 1000000000, 1))))
+subStormData$CROPDMG <- subStormData$CROPDMG * ifelse(subStormData$CROPDMGEXP 
+                                                            %in% c("h","H"), 100,
+                        ifelse(subStormData$CROPDMGEXP %in% c("k", "K"), 1000,
+                        ifelse(subStormData$CROPDMGEXP %in% c("m", "M"), 1000000,
+                        ifelse(subStormData$CROPDMGEXP %in% c("b", "B"), 1000000000, 1))))
+subStormData$TTLDMG <- subStormData$PROPDMG + subStormData$CROPDMG
+subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 ```
 
-##### Define period for aggregating measurement data, population health & economic
-A second area that requires some clean-up are the dates and times at the beginning and 
-end of an event.  From documentation provided by the National Westher Service, some notes about the time of an event,
+### Standardizing Event Type
+```{r unique_evtype_in_data, include = FALSE}
+events <- length(unique(subStormData$EVTYPE))
+```
+In the dataset provided, there are `r events` unique EVTYPE, defining the types of events 
+that have occurred.  According to the National Weather Service Instruction 10-165 
+released on August 17, 2007, events should fit into one of 48 event types or categories.  
 
-"In general, the time of an event, as it appears in the header-strip, is the time when 
-the event reached locally, regionally, or nationally established advisory or warning criteria (exceptions defined in Section 2.3.1). The event time could be the single time that a peak wind gust of 65 knots (75 mph) occurred, or it could be beginning and ending times of a 10-minute shower of large, damaging hailstones. If the time of the event in 
-the header-strip is a broad guesstimate,then it should be indicated as such in the event narrative."
+The following steps reflect an effort to more consistently define the actual list of 
+event types in the data with recommended list.  This represents a 'best effort' to 
+improve the quality of the data.  Ideally, a mapping would be provided by the owner of 
+the dataset to ensure a more accurrate cross-walk.  
+```{r event_type_clean_up, include = TRUE}
+subStormData$EVENT_TYPE <- ifelse(grepl("TORNADO", subStormData$EVTYPE, 
+                                          ignore.case = TRUE), "Tornado",
+                              ifelse(grepl("TYPHOON", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Hurricane(Typhoon)",
+                              ifelse(grepl("HURRICAN", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Hurricane",
+                              ifelse(grepl("TSUNAMI", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Tsunami",
+                              ifelse(grepl("FUNNEL", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Funnel Cloud",
+                              ifelse(grepl("AVALANCHE", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Avalanche",
+                              ifelse(grepl("BLIZZARD", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Blizzard",
+                              ifelse(grepl("MARINE HAIL", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Marine Hail",
+                              ifelse(grepl("MARINE HIGH WIND", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Marine High Wind",
+                              ifelse(grepl("MARINE STRONG WIND", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Marine Strong Wind",
+                              ifelse(grepl("MARUNE THUNDERSTORM", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Marine Thunderstorm Wind",
+                              ifelse(grepl("THUNDERSTORM", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Thunderstorm Wind",
+                              ifelse(grepl("TSTM", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Thunderstorm Wind",
+                              ifelse(grepl("HAIL", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "HAIL",
+                              ifelse(grepl()))))))))))))))))
 
-For our analysis, the specific event times is not critical to assessing the hazard to population health or the amount of economic consequences.  The results will summarized to a calendar year based on BGN_DATE in the data provided.  In addition to converting BGN_DATE to a date format, we are adding a 'YEAR' column.
-
-As END_DATE and END_TIME are infrequently populated, these variables will not be used in our analysis.  This also minimizes the need to further process the variables.
-
-
-
+```
 
 ### Evaluating the Economic Consequences and Hazards to Population Health of Events
 Using the available data, we have determined that our metric to assess the event type  
@@ -159,14 +202,14 @@ health, it is difficult, likely impossible, to develop comparison to a fatality 
 injuries = 1 fatality).  If two event types have the same number of fatalities, the number  
 of injuries may be considered for determing the greater hazard.  
 
-As previously noted, our analysis includes data for events with a BGN_DATE of 1/1/1980  
+As previously noted, our analysis includes data for events with a BGN_DATE of 1/1/1990  
 or later.  The objective is to better reflect more current population density and  
 development levels in various market.  This allows us to reflect, for example, the higher  
 cost or hazard in coastal states due to hurricanes.  
 
 When stating which 'Event Type' has the greatest economic consequence the statement is  
 based on the total economic cost, property damage + crop damage, for each event over the  
-entire period, 1980 - 2011.  Similarly, the total number of fatalities is used to  
+entire period, 1990 - 2011.  Similarly, the total number of fatalities is used to  
 determine the event type presenting the greatest hazard to population health.
 
 NOTE:  Because some event types may occur with less frequency, but greater impact for each  
