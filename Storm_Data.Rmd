@@ -1,7 +1,7 @@
 ---
 title: "Economic Consequences & Population Health Hazards of Severe Weather"
 author: "EHarris"
-date: "6/06/2017"
+date: "6/09/2017"
 output: 
   html_document: 
     keep_md: yes
@@ -54,7 +54,7 @@ to answering the stated questions, or goals.  The following steps are taken to s
 dataset to the variables, and dates, that are relevent to the analysis.  This subset 
 also facilitates the effort to clean-up the data for further review and analysis.
 
-##### Date / time variables
+###### Date / time variables
 There are two areas for clean-up, or defining subset, of the original file with respect 
 to dates and/or times provided.  Key to these decisions to include or remove is whether 
 the information supports the analysis.
@@ -76,8 +76,7 @@ impute appropriate values, these variables provide little value towards analyzii
 event types in the dataset.  These veariables, therefore, will be removed from subset.
 ```{r missing_end_dates, include = TRUE, echo = FALSE}
 no.missing <- sum(ifelse(StormData$END_DATE %in% c("", " ", "NA", "NaN"), 1, 0))
-pct.missing <- sum(ifelse(StormData$END_DATE %in% c("", " ", "NA", "NaN"), 1,0))/
-                                                            length(StormData$END_DATE)
+pct.missing <- no.missing / length(StormData$END_DATE)
 ```
 For END_DATE, there are `r no.missing` missing dates, or `r pct.missing` percent of total.
 
@@ -87,7 +86,7 @@ prior to 1990 are not as relevant to evaluating the economic consequences or haz
 population health represented by an event. Data for dates prior to 1990 are removed from 
 the subset.
 
-##### Format dates to exclude experience prior to 1990
+###### Format dates to exclude experience prior to 1990
 ```{r event_dates, include = TRUE}
 StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
 StormData$BGN_YEAR <- format(StormData$BGN_DATE, "%Y")
@@ -105,7 +104,7 @@ StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ",
 NOTE:  Although BGN_TIME & TIME_ZONE are not critical to analysis, they will be included 
 in the subset of the data.
 
-##### Defining the location or area for an event
+###### Defining the location or area for an event
 There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  
 that are well-populated and could be used to support analysis by location.  Only these 4  
 variables are included in final, tidy,  dataset to be used for analysis.  Other location  
@@ -133,20 +132,20 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
                                     subStormData$EVTYPE, subStormData$BGN_DATE),]
 ```
 
-##### Create Econonmic Consequencences metric for each event, event type & REFNUM
+#### Standardize Dollar Amounts
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
 example, the dollar amounts for property damage are expressed in different denomiations  
 (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
 so that dollars can be combined, or summed, for different levels of aggregation, as  
 appropriate.
 ```{r economic_measure, include = TRUE}
-subStormData$PROPDMG <- subStormData$PROPDMG * ifelse(subStormData$PROPDMGEXP 
-                                                            %in% c("h","H"), 100,
+subStormData$PROPDMG <- subStormData$PROPDMG * 
+                        ifelse(subStormData$PROPDMGEXP %in% c("h","H"), 100,
                         ifelse(subStormData$PROPDMGEXP %in% c("k", "K"), 1000,
                         ifelse(subStormData$PROPDMGEXP %in% c("m", "M"), 1000000,
                         ifelse(subStormData$PROPDMGEXP %in% c("b", "B"), 1000000000, 1))))
-subStormData$CROPDMG <- subStormData$CROPDMG * ifelse(subStormData$CROPDMGEXP 
-                                                            %in% c("h","H"), 100,
+subStormData$CROPDMG <- subStormData$CROPDMG * 
+                        ifelse(subStormData$CROPDMGEXP %in% c("h","H"), 100,
                         ifelse(subStormData$CROPDMGEXP %in% c("k", "K"), 1000,
                         ifelse(subStormData$CROPDMGEXP %in% c("m", "M"), 1000000,
                         ifelse(subStormData$CROPDMGEXP %in% c("b", "B"), 1000000000, 1))))
@@ -154,7 +153,7 @@ subStormData$TTLDMG <- subStormData$PROPDMG + subStormData$CROPDMG
 subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 ```
 
-### Standardizing Event Type
+#### Standardizing Event Type
 ```{r unique_evtype_in_data, include = FALSE}
 events <- length(unique(subStormData$EVTYPE))
 ```
@@ -301,6 +300,14 @@ subStormData$EVENT_TYPE <- ifelse(grepl("TORNADO", subStormData$EVTYPE,
                                           ignore.case = TRUE), "Tropical Storm",
                   "Other Event")))))))))))))))))))))))))))))))))))))))))))))))))
 
+subStormData <- select(subStormData, REFNUM, EVENT_TYPE, EVTYPE, F, MAG, STATE, 
+                        COUNTYNAME, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE, LATITUDE, 
+                        LONGITUDE, FATALITIES, INJURIES, PROPDMG, CROPDMG, TTLDMG)
+subStormData <- subStormData[order(subStormData$EVENT_TYPE, subStormData$EVTYPE,
+                                   subStormData$STATE, subStormData$COUNTYNAME, 
+                                   subStormData$BGN_YEAR, subStormData$BGN_DATE, 
+                                   subStormData$BGN_TIME),]
+
 unique.events <- length(unique(subStormData$EVENT_TYPE))  ## uniqe events in subset
 events1 <- subset(subStormData, EVENT_TYPE == "Other Event")  ## Other event dataset
 other.obs <- length(events1$EVENT_TYPE)  ## Total observations in 'Other Event' dataset
@@ -332,13 +339,41 @@ economic.sum <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData,
                                     FUN = function(x) sum=sum(x))
 economic.sum <- economic.sum[order(economic.sum$TTLDMG, decreasing = TRUE),]
 economic.sum$TTLDMG_M <- round(economic.sum$TTLDMG / 1000000, digits = 2)
-economic.sum$DOLLARS <- dollar(economic.sum$TTLDMG_M) 
+economic.sum$TTL_DOLLARS <- dollar(economic.sum$TTLDMG_M)
 
-economic.rpt <- select(economic.sum, EVENT_TYPE, DOLLARS)
 
-#### Economic Consequences (in Millions of Dollars)
-economic.rpt
+economic.mean <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) mean=mean(x))
+economic.mean <- economic.mean[order(economic.mean$TTLDMG, decreasing = TRUE),]
+economic.mean$AVGDMG_K <- round(economic.mean$TTLDMG / 1000, digits = 2)
+economic.mean$AVG_DOLLARS <- dollar(economic.mean$AVGDMG_K)
 
+economic.report <- merge(economic.sum, economic.mean, by = "EVENT_TYPE")
+economic.report <- setnames(economic.report, 
+                            old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG_M", "DOLLARS",
+                                    "TTLDMG.y", "AVGDMG_K", "AVG_DOLLARS"),
+                            new = c("EVENT_TYPE", "TTL_DMG", "TTLDMG_M", "TTL_Millions",
+                                    "AVG_DMG", "AVGDMG_K", "AVG_THSND"))
+economic.report <- select(economic.report, EVENT_TYPE, TTL_DMG, TTLDMG_M, TTL_Millions,
+                              AVG_DMG, AVGDMG_K, AVG_THSND)
+economic.report <- economic.report[order(economic.report$TTL_DMG,
+                                         economic.report$AVG_DMG, decreasing = TRUE),]
+economic.report.smry <- select(economic.report, EVENT_TYPE, TTLDMG_M, TTL_Millions, 
+                                                      AVGDMG_K, AVG_THSND)
+economic.report.smry <- economic.report.smry[order(economic.report.smry$TTLDMG_M,
+                              economic.report.smry$AVGDMG_K, decreasing = TRUE),]
+economic.report.smry <- select(economic.report.smry, EVENT_TYPE, TTL_Millions, AVG_THSND)
+```
+
+###### Economic Consequences (Total Damage in Millions / Average Damage in Thousands)
+The following table shows both the total damage cost, property + crop, across all 
+observations of an event and the average damage cost per reported observation between 
+1990 - 2011.  As the table illustrates, although 'Flood' events have created the greatest 
+total economic consequence for this period, there are several other events that create 
+a higher average damage cost per report occurrence.
+
+```{r economic_consequences_report, include = TRUE}
+economic.report.smry
 ```
 
 #### Hazard to Population Health of an Event
@@ -348,12 +383,22 @@ identify the greatest hazard.  For our analysis, we decided that the number of f
 represents the primary metric to measure the hazard level of an event.  If two events 
 have the same number of fatalities, injuries are considered in the assessment.  
 
-
-##### Calculations of key metrics noted above
 ```{r hazard_population_health, include = TRUE}
 fatality.sum <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 fatality.sum <- fatality.sum[order(fatality.sum$FATALITIES, decreasing = TRUE),]
+
+fatality.mean <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) mean=mean(x))
+fatality.mean <- fatality.mean[order(fatality.mean$FATALITIES, decreasing = TRUE),]
+
+event.fatality <- merge(fatality.sum, fatality.mean, by = "EVENT_TYPE")
+event.fatality <- setnames(event.fatality, old = c("EVENT_TYPE", "FATALITIES.x", 
+                                                   "FATALITIES.y"),
+                                          new = c("EVENT_TYPE", "TTL_FATALITY", 
+                                                  "AVG_FATALITY"))
+event.fatality <- event.fatality[order(event.fatality$TTL_FATALITY, 
+                                       event.fatality$AVG_FATALITY, decreasing = TRUE),]
 
 
 injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData, 
@@ -361,42 +406,64 @@ injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData,
 injury.sum <- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]
 
 
-pophlth.sum <- merge(fatality.sum, injury.sum, by.x = "EVENT_TYPE")
-pophlth.sum <- pophlth.sum[order(pophlth.sum$FATALITIES, pophlth.sum$INJURIES,
+pophlth.sum <- merge(event.fatality, injury.sum, by = "EVENT_TYPE")
+pophlth.sum <- pophlth.sum[order(pophlth.sum$TTL_FATALITY, pophlth.sum$INJURIES,
                                                 decreasing = TRUE),]
+```
 
+###### Event Hazard to Population Health
+The following table illustrates the number of fatalities and injuries associated with 
+each event during the stated period, 1990 - 2011.  Although it might be expected that the 
+number of injuries follows the number of fatalities (e.g. high fatality = high injury; 
+low fatality = low injury), it is clear from the table that this relationship is not very 
+strong, particularly where there is low mortality.  
+
+```{r event_hazard_report, include = TRUE}
 pophlth.sum
 ```
 
 
+##### Plot results for each of the top 10 Event Types
+```{r plot_event_damage, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+economic10.sum <- subset(economic.sum, EVENT_TYPE != "Other Event")
+economic10.sum <- economic10.sum[1:10,]
+top10DMG <- c(economic10.sum$EVENT_TYPE)
+event.dmg <- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.dmg10 <- subset(event.dmg, EVENT_TYPE %in% c(top10DMG))
+event.dmg10$DMG_AMT <- round(event.dmg10$TTLDMG / 1000000, digits = 3)
 
-##### Plot results for each of the top 20 Event Types
-```{r plot_metrics_by_event, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+fatality10.sum <- subset(fatality.sum, EVENT_TYPE != "Other Event")
+fatality10.sum <- fatality10.sum[1:10,]
+top10Fatality <- c(fatality10.sum$EVENT_TYPE)
+event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
+
+
+
+event.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
+                                    FUN = function(x) max=max(x))
+
+event.adj <- merge(economic.mean, event.max, by = "EVENT_TYPE")
+event.adj <- select(event.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
+event.adj$DIFF <- event.adj$TTLDMG.x - event.adj$TTLDMG.y 
+
+
 par(mfrow = c(2, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 theme_update(plot.title = element.text(hjust = 0.5))
-qplot(BGN_YEAR, ECONOMIC_MILL, data = event.economic.sum, color = EVTYPE, 
-                  geom = c("point", "smooth"),
-                  main = "Total Economic Consequence by Event (1980 - 2011)", 
-                  xlab = "Measurement Year", ylab = "Total Cost (in Millions)")
-qplot(BGN_YEAR, ECONOMIC_MILL, data = event.economic.mean, color = EVTYPE, 
-                  geom = c("point", "smooth"),
-                  main = "Average Economic Consequence per Occurrence (1980 - 2011)", 
-                  xlab = "Measurement Year", ylab = "Average Cost (in Millions)")
-qplot(BGN_YEAR, FATALITIES, data = event.fatalities.sum, color = EVTYPE, 
-                  geom = c("point", "smooth"),
-                  main = "Total Fatalities by Event (1980 - 2011)", 
-                  xlab = "Measurement Year", ylab = "Total Fatalities")
-qplot(BGN_YEAR, FATALITIES, data = event.fatalities.mean, color = EVTYPE, 
-                  geom = c("point", "smooth"),
-                  main = "Average Fatalities per Occurrence (1980 - 2011)", 
-                  xlab = "Measurement Year", ylab = "Average Fatalities")
-
-
-ggplot(event.economic, aes(x = factor(BGN_YEAR), y = ECONOMIC_THSND, colour = EVTYPE)) +
+ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
       geom_line() +
       geom_point() +
-      labs(title = "Economic Consequences of Weather Event") +
-      labs(x = "Measurement Year", y = "Economic Cost")
+      labs(title = "Total Damage for Top 10 Events") +
+      labs(x = "Measurement Year", y = "Total Damage(in millions)")
+
+ggplot(event.fatality10, aes(x=BGN_YEAR, y=FATALITIES, group=EVENT_TYPE, 
+                                                      colour = EVENT_TYPE)) +
+                  geom_line() +
+                  geom_point() +
+                  labs(title = "Total Fatalities for Top 10 Events") +
+                  labs(x = "Measurement Year", y = "Total Fatalities")
 ```
 
 
