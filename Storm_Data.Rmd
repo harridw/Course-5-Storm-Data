@@ -23,9 +23,16 @@ ipak(packages)
 ```
 
 ## Analysis Synopsis
-Due to the different types, and serverity, of weather experienced throughout a country, there is a desire to understand weather events that create the greatest economic consequences or most hazardous with respect to population health.  
+Due to the different types, and serverity, of weather experienced throughout a country, 
+there is a desire to understand weather events that create the greatest economic 
+consequences or most hazardous with respect to population health.  
 
-We will be using data provided by the National Oceanic and Atmospheric Administration (NOAA) to help answer these questions.  Economic consequences are measured by the amount of damage, property and/or crop, that is associated with each event type.  The population health hazard is measured by the number of fatalities and/or injuries with an event.  The number of fatalities will be the primary metric for determining the population health hazard.
+We will be using data provided by the National Oceanic and Atmospheric Administration 
+(NOAA) to help answer these questions.  Economic consequences are measured by the amount 
+of damage, property and/or crop, that is associated with each event type.  The population 
+health hazard is measured by the number of fatalities and/or injuries with an event.  The 
+number of fatalities will be the primary metric for determining the population health 
+hazard.
 
 ## Data Processing  
 A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
@@ -189,13 +196,13 @@ subStormData$EVENT_TYPE <- ifelse(grepl("TORNADO", subStormData$EVTYPE,
                               ifelse(grepl("HAIL", subStormData$EVTYPE,
                                           ignore.case = TRUE), "HAIL",
                               ifelse(grepl("EXTREME COLD", subStormData$EVTYPE,
-                                          ignore.case = TRUE), "Extreme Cold / Wind Chill",
+                                          ignore.case = TRUE), "Extreme Cold/Wind Chill",
                               ifelse(grepl("EXTREME WIND CHILL", subStormData$EVTYPE,
-                                          ignore.case = TRUE), "Extreme Cold / Wind Chill",
+                                          ignore.case = TRUE), "Extreme Cold/Wind Chill",
                               ifelse(grepl("COLD", subStormData$EVTYPE,
-                                          ignore.case = TRUE), "Cold / Wind Chill",
+                                          ignore.case = TRUE), "Cold/Wind Chill",
                               ifelse(grepl("WIND CHILL", subStormData$EVTYPE,
-                                          ignore.case = TRUE), "Cold / Wind Chill",
+                                          ignore.case = TRUE), "Cold/Wind Chill",
                               ifelse(grepl("FOG", subStormData$EVTYPE,
                                           ignore.case = TRUE), 
                                           ifelse(grepl("FREEZ", subStormData$EVTYPE,
@@ -280,63 +287,88 @@ subStormData$EVENT_TYPE <- ifelse(grepl("TORNADO", subStormData$EVTYPE,
                                           ignore.case = TRUE), "Storm Surge/Tide",
                               ifelse(grepl("TIDE", subStormData$EVTYPE,
                                           ignore.case = TRUE), "Storm Surge/Tide",
-                                    "Other Event")))))))))))))))))))))))))))))))))))))))))))
+                              ifelse(grepl("EROSION", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Storm Surge/Tide",
+                              ifelse(grepl("FREEZING DRIZZLE", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Sleet",
+                              ifelse(grepl("HEAVY SHOWER", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Heavy Rain",
+                              ifelse(grepl("LOW TEMP", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Cold/Wind Chill",
+                              ifelse(grepl("WINTER MIX", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Winter Weather",
+                              ifelse(grepl("COASTALSTORM", subStormData$EVTYPE,
+                                          ignore.case = TRUE), "Tropical Storm",
+                  "Other Event")))))))))))))))))))))))))))))))))))))))))))))))))
+
+unique.events <- length(unique(subStormData$EVENT_TYPE))  ## uniqe events in subset
+events1 <- subset(subStormData, EVENT_TYPE == "Other Event")  ## Other event dataset
+other.obs <- length(events1$EVENT_TYPE)  ## Total observations in 'Other Event' dataset
+sub.obs <- length(subStormData$EVENT_TYPE)   ##Total observations in data subset
+pct.other <- other.obs / sub.obs    ## Percent of observations captured in 'Other Event'
+```
+
+The mapping or cross-walk logic outlined above reduces the `r events` unique events 
+orginally defined in the Storm Data subset, subStormData, to only `r unique.events`.  
+This includes 41 of the 48 defined event types plus a catch-all 'Other Event' category.  
+Only `r pct.other` of the events, or observations, were not assigned to a specific 
+category, but 'Other Event'.
+
+
+## Analysis
+With a cleaner dataset, we are prepared to perform the analysis to answer the proposed 
+questions, economic consequences and hazard to population health.  Each is reviewed 
+separately.  All observations, representing dates between 1990 - 2011, are used in the 
+analysis.  It is recognized that, in some cases, an event will not have much, if any, 
+activity in any given year.  To include / exclude observations because of this fluctuation 
+may misrepresent the effect, or impact, of an event.
+
+#### Economic Consequences of an Event
+For this analysis, the metric to assess the event type generating the greatest 'economonic 
+consequence' is the combined cost for property damage (PROPDMG) and crop damage (CROPDMG). 
+The combined field is named 'TTLDMG'.
+```{r economic_consequences, include = TRUE}
+economic.sum <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+economic.sum <- economic.sum[order(economic.sum$TTLDMG, decreasing = TRUE),]
+economic.sum$TTLDMG_M <- round(economic.sum$TTLDMG / 1000000, digits = 2)
+economic.sum$DOLLARS <- dollar(economic.sum$TTLDMG_M) 
+
+economic.rpt <- select(economic.sum, EVENT_TYPE, DOLLARS)
+
+#### Economic Consequences (in Millions of Dollars)
+economic.rpt
 
 ```
 
-### Evaluating the Economic Consequences and Hazards to Population Health of Events
-Using the available data, we have determined that our metric to assess the event type  
-generating the greatest 'economonic consequence' is the combined cost for property damage  
-(PROPDMG) and crop damage (CROPDMG).  The number of fatalities, captured by 'FATALITIES'  
-variable in the data, will be used to measure the hazard to population health.  Although  
-we recognize that injuries are, at a minimum, a contributing hazard to population  
-health, it is difficult, likely impossible, to develop comparison to a fatality (e.g. 5  
-injuries = 1 fatality).  If two event types have the same number of fatalities, the number  
-of injuries may be considered for determing the greater hazard.  
+#### Hazard to Population Health of an Event
+It is understandable to think that both fatalities and injuries represent a hazard to 
+population health.  The challenge, however, is making a comparison between events to 
+identify the greatest hazard.  For our analysis, we decided that the number of fatalities 
+represents the primary metric to measure the hazard level of an event.  If two events 
+have the same number of fatalities, injuries are considered in the assessment.  
 
-As previously noted, our analysis includes data for events with a BGN_DATE of 1/1/1990  
-or later.  The objective is to better reflect more current population density and  
-development levels in various market.  This allows us to reflect, for example, the higher  
-cost or hazard in coastal states due to hurricanes.  
-
-When stating which 'Event Type' has the greatest economic consequence the statement is  
-based on the total economic cost, property damage + crop damage, for each event over the  
-entire period, 1990 - 2011.  Similarly, the total number of fatalities is used to  
-determine the event type presenting the greatest hazard to population health.
-
-NOTE:  Because some event types may occur with less frequency, but greater impact for each  
-occurrence we have included a mean, or average, economic cost and fatalities of each  
-event type.  Is the list of top 20 event types different?
 
 ##### Calculations of key metrics noted above
-```{r event_impact_metrics, include = TRUE}
-event.economic.sum <- aggregate(ECONOMIC ~ EVTYPE, data = subStormData, 
+```{r hazard_population_health, include = TRUE}
+fatality.sum <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
-event.economic.sum <- event.economic.sum[order(event.economic.sum$ECONOMIC,
-                                               decreasing = TRUE),]
-event.economic.sum20 <- event.economic.sum[1:20,]
-event.economic.sum20$MCOST <- dollar(round(event.economic.sum20$ECONOMIC/1000000, digits = 3)) 
-
-event.economic.mean <- aggregate(ECONOMIC ~ EVTYPE, data = subStormData, 
-                                    FUN = function(x) mean=mean(x))
-event.economic.mean <- event.economic.mean[order(event.economic.mean$ECONOMIC,
-                                               decreasing = TRUE),]
-event.economic.mean20 <- event.economic.mean[1:20,]
-event.economic.mean20$MCOST <- round(event.economic.mean20$ECONOMIC/1000000, digits = 3) 
+fatality.sum <- fatality.sum[order(fatality.sum$FATALITIES, decreasing = TRUE),]
 
 
-event.fatality.sum <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
+injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
-event.fatality.sum <- event.fatality.sum[order(event.fatality.sum$FATALITIES,
-                                               decreasing = TRUE),]
-event.fatality.sum20 <- event.fatality.sum[1:20,]
+injury.sum <- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]
 
-event.fatality.mean <- aggregate(FATALITIES ~ EVTYPE, data = subStormData, 
-                                    FUN = function(x) mean=mean(x))
-event.fatality.mean <- event.fatality.mean[order(event.fatality.mean$FATALITIES,
-                                               decreasing = TRUE),]
-event.fatality.mean20 <- event.fatality.mean[1:20,]
+
+pophlth.sum <- merge(fatality.sum, injury.sum, by.x = "EVENT_TYPE")
+pophlth.sum <- pophlth.sum[order(pophlth.sum$FATALITIES, pophlth.sum$INJURIES,
+                                                decreasing = TRUE),]
+
+pophlth.sum
 ```
+
+
 
 ##### Plot results for each of the top 20 Event Types
 ```{r plot_metrics_by_event, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
