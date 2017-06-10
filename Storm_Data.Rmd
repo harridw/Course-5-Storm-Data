@@ -480,7 +480,6 @@ ggplot(fatality.sum10, aes(x=EVENT_TYPE, y=FATALITIES, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
       labs(title = "Total Fatalities for Top 10 Events") +
       labs(x = "Event", y = "Total Fatalities")
-
 ```
 
 
@@ -532,16 +531,79 @@ economic consequences or hazard to population health.  However, it does provide 
 insight to what might be expected in a typical year.
 
 ###### Identifying & Adjusting for Total Damage Outlier
+A first step to adjusting for an outlier is defining what represents an outlier.  To 
+minimize the statistical modeling, the outlier represents the yaar with the greatest 
+economic consequence or hazard to population health, each separately, for an event type.  
 
+###### Maximum, outlier, value for each Event Type
+```{r event_type_outlier, include = TRUE}
 economic.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
-                                    FUN = function(x) max=max(x))
+                                          FUN = function(x) max=max(x))
+fatality.max <- aggregate(FATALITIES ~ EVENT_TYPE, data = event.fatality, 
+                                          FUN = function(x) max=max(x))
+```
 
-event.adj <- merge(economic.mean, economic.max, by = "EVENT_TYPE")
-event.adj <- select(event.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
-event.adj <- setnames(event.adj, old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG.y"),
+
+###### Adjusting for Outlier
+The outliers are replaced by the mean, or average, across the entire period, 1990 - 2011, 
+including the outlier year.  This approach allows for some recognition of the outlier, but 
+less extensively.
+
+###### EXHIBIT 7: Economic Outlier Adjustment (Top 20 Event Types)
+This table provides a comparison before and after the outlier adjustment to Total Damage 
+for each Event Type.  The year representing the outlier Total Damage is adjusted to 
+reflect the average Total Damage across all reported years of the event type.
+
+FLOOD still has the greatest economic consequence, but less significantly over the next 
+highest total damage after outlier adjustment.  It is worth noting that the outlier 
+adjustment applied to each of the event types.  Hurricane (Typhoon) is another Event Type 
+where the outlier adjustment made a significant change in Total Damage.
+```{r economic.adjust, include = TRUE}
+economic.adj <- merge(economic.mean, economic.max, by = "EVENT_TYPE")
+economic.adj <- select(economic.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
+economic.adj <- setnames(economic.adj, old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG.y"),
                                     new = c("EVENT_TYPE", "AVG_DMG", "MAX_DMG"))
 
-event.dmg.adj <- merge(event.dmg, event.adj, by = "EVENT_TYPE")
-event.dmg.adj$TTLDMG_ADJ <- ifelse(event.dmg.adj$TTLDMG - event.dmg.adj$MAX_DMG < 0,
-                                    event.dmg.adj$TTLDMG, event.dmg.adj$AVG_DMG)
+economic.adj <- merge(event.dmg, economic.adj, by = "EVENT_TYPE")
+economic.adj$TTLDMG_ADJ <- ifelse(economic.adj$TTLDMG - economic.adj$MAX_DMG < 0,
+                                    economic.adj$TTLDMG, economic.adj$AVG_DMG)
+economic.adj <- select(economic.adj, EVENT_TYPE, BGN_YEAR, TTLDMG, TTLDMG_ADJ)
+economic.adj.smry <- 
+      select(economic.adj, EVENT_TYPE, TTLDMG, TTLDMG_ADJ) %>%
+      group_by(EVENT_TYPE) %>%
+      summarize(TTL_INIT = sum(TTLDMG), TTL_ADJ = sum(TTLDMG_ADJ))
+economic.adj.smry <- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]
+```
+
+```{r economic_adjust_table, echo = FALSE}
+economic.adj.smry[1:20,]
+```
+
+
+
+** Fatality Outlier Adjustment**  
+```{r fatality.adjust, include = TRUE}
+fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
+fatality.adj <- select(fatality.adj, EVENT_TYPE, FATALITIES.x, FATALITIES.y)
+fatality.adj <- setnames(fatality.adj, old = c("EVENT_TYPE", "FATALITIES.x", "FATALITIES.y"),
+                                    new = c("EVENT_TYPE", "AVG_FATALITY", "MAX_FATALITY"))
+fatality.adj <- merge(event.fatality, fatality.adj, by = "EVENT_TYPE")
+fatality.adj$FATALITY_ADJ <- ifelse(fatality.adj$FATALITIES - fatality.adj$MAX_FATALITY < 0,
+                                    fatality.adj$FATALITIES, fatality.adj$AVG_FATALITY)
+fatality.adj <- select(fatality.adj, EVENT_TYPE, BGN_YEAR, FATALITIES, FATALITY_ADJ)
+fatality.adj.smry <- 
+      select(fatality.adj, EVENT_TYPE, FATALITIES, FATALITY_ADJ) %>%
+      group_by(EVENT_TYPE) %>%
+      summarize(FATALITY_INIT = sum(FATALITIES), TTL_ADJ = sum(FATALITY_ADJ))
+fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_INIT, 
+                                                            decreasing = TRUE),]
+```
+
+
+
+
+
+
+
+
 
