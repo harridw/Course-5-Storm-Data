@@ -1,7 +1,7 @@
 ---
-title: "Economic Consequences & Population Health Hazards of Severe Weather"
+title: "Economic Consequences & Population Health Hazards of different Event Types
 author: "EHarris"
-date: "6/09/2017"
+date: "6/10/2017"
 output: 
   html_document: 
     keep_md: yes
@@ -467,7 +467,7 @@ sum, or total, and mean economic consequences, property damage (PROPDMG) and cro
 the hazard to population health, the graph illustrates the number of fatalities for the 
 event.  Information is captured in bar plots.
 
-###### EXHIBIT 5: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
+###### PLOT 2: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
 ```{r bar_plot_event_impacts,fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
 par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 theme_update(plot.title = element.text(hjust = 0.5))
@@ -506,7 +506,7 @@ event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormD
 event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
 ```
 
-###### EXHIBIT 6: Plot results for top 10 Event Types, by Year
+###### PLOT 2: Plot results for top 10 Event Types, by Year
 ```{r plot_event_by_year, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
 par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 theme_update(plot.title = element.text(hjust = 0.5))
@@ -549,7 +549,7 @@ The outliers are replaced by the mean, or average, across the entire period, 199
 including the outlier year.  This approach allows for some recognition of the outlier, but 
 less extensively.
 
-###### EXHIBIT 7: Economic Outlier Adjustment (Top 20 Event Types)
+###### EXHIBIT 5: Economic Outlier Adjustment (Top 20 Event Types)
 This table provides a comparison before and after the outlier adjustment to Total Damage 
 for each Event Type.  The year representing the outlier Total Damage is adjusted to 
 reflect the average Total Damage across all reported years of the event type.
@@ -580,8 +580,14 @@ economic.adj.smry[1:20,]
 ```
 
 
+###### EXHIBIT 6: Fatality Outlier Adjustment (Top 20 Event Type)
+This table provides a comparison before and after the outlier adjustment to FATALITIES 
+for each Event Type.  Similar to the adjustement to Toal Damange, the year representing 
+the outlier FATALITIES is adjusted to reflect the average FATALITIES across all reported 
+years of the event type.
 
-** Fatality Outlier Adjustment**  
+EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
+fatalities for the event type between 1990 - 2011.
 ```{r fatality.adjust, include = TRUE}
 fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
 fatality.adj <- select(fatality.adj, EVENT_TYPE, FATALITIES.x, FATALITIES.y)
@@ -594,12 +600,14 @@ fatality.adj <- select(fatality.adj, EVENT_TYPE, BGN_YEAR, FATALITIES, FATALITY_
 fatality.adj.smry <- 
       select(fatality.adj, EVENT_TYPE, FATALITIES, FATALITY_ADJ) %>%
       group_by(EVENT_TYPE) %>%
-      summarize(FATALITY_INIT = sum(FATALITIES), TTL_ADJ = sum(FATALITY_ADJ))
-fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_INIT, 
+      summarize(FATALITY_INIT = sum(FATALITIES), FATALITY_ADJ = sum(FATALITY_ADJ))
+fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_ADJ, 
                                                             decreasing = TRUE),]
 ```
 
-
+```{r fatality_adjust_table, echo = FALSE}
+fatality.adj.smry[1:20,]
+```
 
 
 
