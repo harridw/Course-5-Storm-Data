@@ -2,13 +2,13 @@
 EHarris  
 6/10/2017  
 
-## Load anticipated packages to be used throughout Course 5 Project 2
+## Packages for Course 5 Project 2
 
 
-## Analysis Synopsis
-Due to the different types, and serverity, of weather experienced throughout a country, 
-there is a desire to understand weather events that create the greatest economic 
-consequences or most hazardous with respect to population health.  
+## Synopsis
+Due to the different types, and serverity, of events experienced throughout a country, 
+there is a desire to understand which event types create the greatest economic consequences  
+or most hazardous with respect to population health.  
 
 We will be using data provided by the National Oceanic and Atmospheric Administration 
 (NOAA) to help answer these questions.  Economic consequences are measured by the amount 
@@ -16,6 +16,10 @@ of damage, property and/or crop, that is associated with each event type.  The p
 health hazard is measured by the number of fatalities and/or injuries with an event.  The 
 number of fatalities will be the primary metric for determining the population health 
 hazard.
+
+The following analysis will show that a FLOOD represents the greatest economic consequence  
+across all states, but few fataliies. However, EXCESSIVE HEAT is the greatest harzard to  
+population health based on number of fatalities with little economic consequences.
 
 ## Data Processing  
 A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
@@ -27,7 +31,7 @@ StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ","
                         quote = "\"", dec = ".")
 ```
 
-** EXHIBIT 1: Overview of data file
+#### EXHIBIT 1: Overview of data file  
 ###### File Dimensions
 
 ```
@@ -83,12 +87,12 @@ to answering the stated questions, or goals.  The following steps are taken to s
 dataset to the variables, and dates, that are relevent to the analysis.  This subset 
 also facilitates the effort to clean-up the data for further review and analysis.
 
-###### Date / time variables
+##### Date / time variables  
 There are two areas for clean-up, or defining subset, of the original file with respect 
 to dates and/or times provided.  Key to these decisions to include or remove is whether 
 the information supports the analysis.
 
-** An overview of event time from the National Weather Service:  
+## An overview of event time from the National Weather Service:  
 "In general, the time of an event, as it appears in the header-strip, is the time when 
 the event reached locally, regionally, or nationally established advisory or warning 
 criteria (exceptions defined in Section 2.3.1). The event time could be the single time 
@@ -105,7 +109,7 @@ impute appropriate values, these variables provide little value towards analyzii
 event types in the dataset.  These veariables, therefore, will be removed from subset.
 
 
-For END_DATE, there are 2.43411\times 10^{5} missing dates, or 0.2697682 percent of total.
+For END_DATE, there are 2.43411\times 10^{5} missing dates, or 27 percent of total.
 
 The other consideration for dates / times is relevance of the data.  The data includes 
 data between 1950 - 2011.  Because of shifting populations over time the data for events 
@@ -113,7 +117,7 @@ prior to 1990 are not as relevant to evaluating the economic consequences or haz
 population health represented by an event. Data for dates prior to 1990 are removed from 
 the subset.
 
-###### Format dates to exclude experience prior to 1990
+##### Format dates to exclude experience prior to 1990
 
 ```r
 StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
@@ -132,11 +136,11 @@ StormData$BGN_TIME <- paste(StormData$hour, ":", StormData$minute, " ",
 NOTE:  Although BGN_TIME & TIME_ZONE are not critical to analysis, they will be included 
 in the subset of the data.
 
-###### Defining the location or area for an event
-There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  
-that are well-populated and could be used to support analysis by location.  Only these 4  
-variables are included in final, tidy,  dataset to be used for analysis.  Other location  
-related variables are sparsely populated.
+##### Defining the location or area for an event
+There are four variables -- STATE, COUNTYNAME, LATITUDE, & LONGITUDE --  that are 
+well-populated and could be used to support analysis by location.  Only these 4  variables 
+are included in final, tidy,  dataset to be used for analysis.  Other location related 
+variables are sparsely populated.
 
 NOTE:  Location is not used in the final analysis for determining the event type with the 
 greatest economic consequences or hazard to population health.  Results will evaluated 
@@ -161,14 +165,14 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
                                     subStormData$EVTYPE, subStormData$BGN_DATE),]
 ```
 
-** EXHIBIT 2: Overview of data subset
-###### Data Subset Dimensions
+#### EXHIBIT 2: Overview of data subset  
+##### Data Subset Dimensions  
 
 ```
 ## [1] 751740     18
 ```
 
-###### Variable Names & Formats in Data Subset
+##### Variable Names & Formats in Data Subset  
 
 ```
 ## 'data.frame':	751740 obs. of  18 variables:
@@ -193,7 +197,7 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
 ```
 
 
-#### Standardize Dollar Amounts
+#### Standardize Dollar Amounts  
 To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
 example, the dollar amounts for property damage are expressed in different denomiations  
 (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
@@ -376,14 +380,14 @@ sub.obs <- length(subStormData$EVENT_TYPE)   ## Total observations in data subse
 pct.other <- round((other.obs / sub.obs) * 100, digits = 1)   ## % in 'Other Event'
 ```
 
-The mapping, or cross-walk, logic outlined above reduces the 985 unique events 
-orginally defined in the Storm Data subset, subStormData, to only 42.  
+The mapping, or cross-walk, logic outlined above reduces the 985 unique events originally  
+defined in the Storm Data subset, subStormData, to only 42.  
 This includes 41 of the 48 defined event types plus a catch-all 'Other Event' category.  
 Only 3.9 of the events, or observations, were not assigned to a specific 
 category, but 'Other Event'.
 
 
-## Results / Analysis
+### Results / Analysis
 With a cleaner dataset, we are prepared to perform the analysis to answer the proposed 
 questions, economic consequences and hazard to population health.  Each is reviewed 
 separately.  All observations, representing dates between 1990 - 2011, are used in the 
@@ -399,7 +403,7 @@ damage (CROPDMG).
 Below we create two tables that represent the total and average cost of damages reported 
 for each event during the period 1990 - 2011.
 
-###### Total Damage for Each Event (Economic Consequences)
+##### Total Damage for Each Event (Economic Consequences)
 
 ```r
 economic.sum <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
@@ -412,7 +416,7 @@ economic.sum10 <- subset(economic.sum, EVENT_TYPE != "Other Event")
 economic.sum10 <- economic.sum10[1:10,]     ## Top 10 Event Types excluding 'Other Event'
 ```
 
-###### Average Damage for each reported occurrence of Event Type
+##### Average Damage for each reported occurrence of Event Type
 
 ```r
 economic.mean <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
@@ -425,7 +429,7 @@ economic.mean10 <- subset(economic.mean, EVENT_TYPE != "Other Event")
 economic.mean10 <- economic.mean10[1:10,]   ## Top 10 Event Types excluding 'Other Event'
 ```
 
-###### EXHIBIT 3: Top 20 Events based on Economic Consequences (Total Damage)
+##### EXHIBIT 3: Top 20 Events based on Economic Consequences (Total Damage)
 The following table shows both the total damage cost, property + crop, across all 
 observations of an event and the average damage cost per reported observation between 
 1990 - 2011.  As the table illustrates, although 'Flood' events have created the greatest 
@@ -486,7 +490,7 @@ identify the greatest hazard.  For our analysis, we decided that the number of f
 represents the primary metric to measure the hazard level of an event.  If two events 
 have the same number of fatalities, injuries are considered in the assessment.
 
-###### Total Number of Fatalities reported for Each Event 
+##### Total Number of Fatalities reported for Each Event 
 
 ```r
 fatality.sum <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
@@ -496,7 +500,7 @@ fatality.sum10 <- subset(fatality.sum, EVENT_TYPE != "Other Event")
 fatality.sum10 <- fatality.sum10[1:10,]
 ```
 
-###### Average Number of Fatalities, per occurrence, reported for Each Event 
+##### Average Number of Fatalities, per occurrence, reported for Each Event 
 
 ```r
 fatality.mean <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
@@ -506,7 +510,7 @@ fatality.mean10 <- subset(fatality.mean, EVENT_TYPE != "Other Event")
 fatality.mean10 <- fatality.mean10[1:10,]
 ```
 
-###### Total Number of Injuries reported for Each Event 
+##### Total Number of Injuries reported for Each Event 
 
 ```r
 injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData, 
@@ -514,7 +518,7 @@ injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData,
 injury.sum <- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]
 ```
 
-###### EXHIBIT 4: Review Population Health Hazard for Top 20 Event Types
+#### EXHIBIT 4: Review Population Health Hazard for Top 20 Event Types
 The following table illustrates the number of fatalities and injuries associated with 
 each event during the stated period, 1990 - 2011.  Although it might be expected that the 
 number of injuries follows the number of fatalities (e.g. high fatality = high injury; 
@@ -574,17 +578,17 @@ due to the significantly higher reported injuries.
 ```
 
 
-###### Panel Plot of Economic Consequences & Hazard to Population Health
+#### Panel Plot of Economic Consequences & Hazard to Population Health
 There are 4 individual plots included in this panel plot.  The four plots reflect the 
 sum, or total, and mean economic consequences, property damage (PROPDMG) and crop damage 
 (CROPDMG).  The plot represent the combined values rather than each separately.  For 
 the hazard to population health, the graph illustrates the number of fatalities for the 
 event.  Information is captured in bar plots.
 
-###### PLOT 2: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
+##### PLOT 2: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
 
 ```r
-par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 #theme_update(plot.title = element.text(hjust = 0.5))
 ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
@@ -619,7 +623,7 @@ may be influencing our results.
 ###### PLOT 2: Plot results for top 10 Event Types, by Year
 
 ```r
-par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 #theme_update(plot.title = element.text(hjust = 0.5))
 ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
@@ -640,19 +644,19 @@ ggplot(event.fatality10, aes(x=BGN_YEAR, y=FATALITIES, group=EVENT_TYPE, colour 
 
 ![](figure/plot_event_by_year-2.png)<!-- -->
 
-###### Adjusting for Outlier
+#### Adjusting for Outlier
 Removing, or adjusting for, the outlier year provides a new perspective to look at the 
 impact, economic consequences and fatalities, created by an event type, particularly when 
 looking across multiple years.  This does not change which event type has had the greatest 
 economic consequences or hazard to population health.  However, it does provide better 
 insight to what might be expected in a typical year.
 
-###### Identifying & Adjusting for Total Damage Outlier
+##### Identifying & Adjusting for Total Damage Outlier
 A first step to adjusting for an outlier is defining what represents an outlier.  To 
 minimize the statistical modeling, the outlier represents the yaar with the greatest 
 economic consequence or hazard to population health, each separately, for an event type.  
 
-###### Maximum, outlier, value for each Event Type
+##### Maximum, outlier, value for each Event Type
 
 ```r
 economic.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
@@ -662,12 +666,12 @@ fatality.max <- aggregate(FATALITIES ~ EVENT_TYPE, data = event.fatality,
 ```
 
 
-###### Adjusting for Outlier
+#### Adjusting for Outlier
 The outliers are replaced by the mean, or average, across the entire period, 1990 - 2011, 
 including the outlier year.  This approach allows for some recognition of the outlier, but 
 less extensively.
 
-###### EXHIBIT 5: Economic Outlier Adjustment (Top 20 Event Types)
+##### EXHIBIT 5: Economic Outlier Adjustment (Top 20 Event Types)
 This table provides a comparison before and after the outlier adjustment to Total Damage 
 for each Event Type.  The year representing the outlier Total Damage is adjusted to 
 reflect the average Total Damage across all reported years of the event type.
@@ -722,14 +726,14 @@ economic.adj.smry <- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasi
 ```
 
 
-###### EXHIBIT 6: Fatality Outlier Adjustment (Top 20 Event Type)
+##### EXHIBIT 6: Fatality Outlier Adjustment (Top 20 Event Type)
 This table provides a comparison before and after the outlier adjustment to FATALITIES 
 for each Event Type.  Similar to the adjustement to Toal Damange, the year representing 
 the outlier FATALITIES is adjusted to reflect the average FATALITIES across all reported 
 years of the event type.
 
 EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
-fatalities for the event type between 1990 - 2011.
+fatalities, for the event type between 1990 - 2011.
 
 ```r
 fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
