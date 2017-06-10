@@ -1,0 +1,15 @@
+base
+plyr
+dplyr
+data.table
+dtplyr
+lubridate
+ggplot2
+scales
+reshape2
+knitr
+R.cache
+stringr
+gtools
+SparseM
+quantreg

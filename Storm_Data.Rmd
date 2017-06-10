@@ -340,6 +340,8 @@ economic.sum <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData,
 economic.sum <- economic.sum[order(economic.sum$TTLDMG, decreasing = TRUE),]
 economic.sum$TTLDMG_M <- round(economic.sum$TTLDMG / 1000000, digits = 2)
 economic.sum$TTL_DOLLARS <- dollar(economic.sum$TTLDMG_M)
+economic.sum10 <- subset(economic.sum, EVENT_TYPE != "Other Event")
+economic.sum10 <- economic.sum10[1:10,]
 
 
 economic.mean <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
@@ -347,10 +349,13 @@ economic.mean <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData,
 economic.mean <- economic.mean[order(economic.mean$TTLDMG, decreasing = TRUE),]
 economic.mean$AVGDMG_K <- round(economic.mean$TTLDMG / 1000, digits = 2)
 economic.mean$AVG_DOLLARS <- dollar(economic.mean$AVGDMG_K)
+economic.mean10 <- subset(economic.mean, EVENT_TYPE != "Other Event")
+economic.mean10 <- economic.mean10[1:10,]
+
 
 economic.report <- merge(economic.sum, economic.mean, by = "EVENT_TYPE")
 economic.report <- setnames(economic.report, 
-                            old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG_M", "DOLLARS",
+                            old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG_M", "TTL_DOLLARS",
                                     "TTLDMG.y", "AVGDMG_K", "AVG_DOLLARS"),
                             new = c("EVENT_TYPE", "TTL_DMG", "TTLDMG_M", "TTL_Millions",
                                     "AVG_DMG", "AVGDMG_K", "AVG_THSND"))
@@ -387,10 +392,16 @@ have the same number of fatalities, injuries are considered in the assessment.
 fatality.sum <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 fatality.sum <- fatality.sum[order(fatality.sum$FATALITIES, decreasing = TRUE),]
+fatality.sum10 <- subset(fatality.sum, EVENT_TYPE != "Other Event")
+fatality.sum10 <- fatality.sum10[1:10,]
+
 
 fatality.mean <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) mean=mean(x))
 fatality.mean <- fatality.mean[order(fatality.mean$FATALITIES, decreasing = TRUE),]
+fatality.mean10 <- subset(fatality.mean, EVENT_TYPE != "Other Event")
+fatality.mean10 <- fatality.mean10[1:10,]
+
 
 event.fatality <- merge(fatality.sum, fatality.mean, by = "EVENT_TYPE")
 event.fatality <- setnames(event.fatality, old = c("EVENT_TYPE", "FATALITIES.x", 
@@ -423,36 +434,62 @@ pophlth.sum
 ```
 
 
+###### Panel Plot of Economic Consequences & Hazard to Population Health
+There are 4 individual plots included in this panel plot.  The four plots reflect the 
+sum, or total, and mean economic consequences, property damage (PROPDMG) and crop damage 
+(CROPDMG).  The plot represent the combined values rather than each separately.  For 
+the hazard to population health, the graph illustrates the number of fatalities for the 
+event.  Information is captured in bar plots.
+```{r bar_plot_event_impacts,fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+#theme_update(plot.title = element.text(hjust = 0.5))
+ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
+      geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
+      labs(title = "Total Damage for Top 10 Events") +
+      labs(x = "Event", y = "Total Damage(in millions)")
+
+ggplot(economic.mean10, aes(x=EVENT_TYPE, y=AVGDMG_K, group=EVENT_TYPE)) +
+            geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
+            labs(title = "Total Damage for Top 10 Events") +
+            labs(x = "Event", y = "Total Damage(in Thousands)")
+
+ggplot(fatality.sum10, aes(x=EVENT_TYPE, y=FATALITIES, group=EVENT_TYPE)) +
+      geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
+      labs(title = "Total Fatalities for Top 10 Events") +
+      labs(x = "Event", y = "Total Fatalities")
+
+ggplot(fatality.mean10, aes(x=EVENT_TYPE, y=FATALITIES, group=EVENT_TYPE)) +
+            geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
+            labs(title = "Total Fatalities for Top 10 Events") +
+            labs(x = "Event", y = "Total Fatalities")
+```
+
 ##### Plot results for each of the top 10 Event Types
 ```{r plot_event_damage, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-economic10.sum <- subset(economic.sum, EVENT_TYPE != "Other Event")
-economic10.sum <- economic10.sum[1:10,]
-top10DMG <- c(economic10.sum$EVENT_TYPE)
+top10DMG <- c(economic.sum10$EVENT_TYPE)
 event.dmg <- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 event.dmg10 <- subset(event.dmg, EVENT_TYPE %in% c(top10DMG))
 event.dmg10$DMG_AMT <- round(event.dmg10$TTLDMG / 1000000, digits = 3)
 
-fatality10.sum <- subset(fatality.sum, EVENT_TYPE != "Other Event")
-fatality10.sum <- fatality10.sum[1:10,]
-top10Fatality <- c(fatality10.sum$EVENT_TYPE)
+top10Fatality <- c(fatality.sum10$EVENT_TYPE)
 event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
 
-
-
-event.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
+economic.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
                                     FUN = function(x) max=max(x))
+event.dmg$MAX_FLG <- ifelse(paste(event.dmg$EVENT_TYPE, event.dmg$TTLDMG) = 
+                              paste(economic.max$EVENT_TYPE, economic.max$TTLDMG),1,0)
 
 event.adj <- merge(economic.mean, event.max, by = "EVENT_TYPE")
 event.adj <- select(event.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
 event.adj$DIFF <- event.adj$TTLDMG.x - event.adj$TTLDMG.y 
 
 
-par(mfrow = c(2, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 theme_update(plot.title = element.text(hjust = 0.5))
-ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
+ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE)) +
       geom_line() +
       geom_point() +
       labs(title = "Total Damage for Top 10 Events") +
