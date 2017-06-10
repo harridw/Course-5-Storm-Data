@@ -1,26 +1,9 @@
----
-title: "Economic Consequences & Population Health Hazards of different Event Types"
-author: "EHarris"
-date: "6/10/2017"
-output: 
-  html_document: 
-    keep_md: yes
----
+# Economic Consequences & Population Health Hazards of different Event Types
+EHarris  
+6/10/2017  
 
 ## Load anticipated packages to be used throughout Course 5 Project 2
-```{r setup, include=FALSE}
-ipak <- function(pkg){
-      new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-      if (length(new.pkg)) 
-            install.packages(new.pkg, dependencies = TRUE)
-      sapply(pkg, require, character.only = TRUE)
-}
 
-### Package Usage
-packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2", "scales",
-                  "reshape2", "knitr", "R.cache", "stringr", "gtools", "quantreg")
-ipak(packages)
-```
 
 ## Analysis Synopsis
 Due to the different types, and serverity, of weather experienced throughout a country, 
@@ -38,20 +21,60 @@ hazard.
 A first step to our analysis is reading the data into R from the working directory. The data provided is a zipped csv file.  We unzip and read into R using read.csv file.  The code to read in the file, as well as a couple summaries of the data.
 
 #### Read zipped csv file into R
-```{r read_storm_data, include = TRUE, cache = TRUE}
+
+```r
 StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ",",
                         quote = "\"", dec = ".")
 ```
 
 ** EXHIBIT 1: Overview of data file
 ###### File Dimensions
-```{r file_dimensions, echo = FALSE}
-dim(StormData)
+
+```
+## [1] 902297     37
 ```
 
 ###### Variable Names & Formats
-```{r data_names_formats, echo = FALSE}
-str(StormData)
+
+```
+## 'data.frame':	902297 obs. of  37 variables:
+##  $ STATE__   : num  1 1 1 1 1 1 1 1 1 1 ...
+##  $ BGN_DATE  : Factor w/ 16335 levels "1/1/1966 0:00:00",..: 6523 6523 4242 11116 2224 2224 2260 383 3980 3980 ...
+##  $ BGN_TIME  : Factor w/ 3608 levels "00:00:00 AM",..: 272 287 2705 1683 2584 3186 242 1683 3186 3186 ...
+##  $ TIME_ZONE : Factor w/ 22 levels "ADT","AKS","AST",..: 7 7 7 7 7 7 7 7 7 7 ...
+##  $ COUNTY    : num  97 3 57 89 43 77 9 123 125 57 ...
+##  $ COUNTYNAME: Factor w/ 29601 levels "","5NM E OF MACKINAC BRIDGE TO PRESQUE ISLE LT MI",..: 13513 1873 4598 10592 4372 10094 1973 23873 24418 4598 ...
+##  $ STATE     : Factor w/ 72 levels "AK","AL","AM",..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ EVTYPE    : Factor w/ 985 levels "   HIGH SURF ADVISORY",..: 834 834 834 834 834 834 834 834 834 834 ...
+##  $ BGN_RANGE : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ BGN_AZI   : Factor w/ 35 levels "","  N"," NW",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ BGN_LOCATI: Factor w/ 54429 levels ""," Christiansburg",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ END_DATE  : Factor w/ 6663 levels "","1/1/1993 0:00:00",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ END_TIME  : Factor w/ 3647 levels ""," 0900CST",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ COUNTY_END: num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ COUNTYENDN: logi  NA NA NA NA NA NA ...
+##  $ END_RANGE : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ END_AZI   : Factor w/ 24 levels "","E","ENE","ESE",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ END_LOCATI: Factor w/ 34506 levels ""," CANTON"," TULIA",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ LENGTH    : num  14 2 0.1 0 0 1.5 1.5 0 3.3 2.3 ...
+##  $ WIDTH     : num  100 150 123 100 150 177 33 33 100 100 ...
+##  $ F         : int  3 2 2 2 2 2 2 1 3 3 ...
+##  $ MAG       : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ FATALITIES: num  0 0 0 0 0 0 0 0 1 0 ...
+##  $ INJURIES  : num  15 0 2 2 2 6 1 0 14 0 ...
+##  $ PROPDMG   : num  25 2.5 25 2.5 2.5 2.5 2.5 2.5 25 25 ...
+##  $ PROPDMGEXP: Factor w/ 19 levels "","-","?","+",..: 17 17 17 17 17 17 17 17 17 17 ...
+##  $ CROPDMG   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ CROPDMGEXP: Factor w/ 9 levels "","?","0","2",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ WFO       : Factor w/ 542 levels ""," CI","%SD",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ STATEOFFIC: Factor w/ 250 levels "","ALABAMA, Central",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ ZONENAMES : Factor w/ 25112 levels "","                                                                                                                               "| __truncated__,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ LATITUDE  : num  3040 3042 3340 3458 3412 ...
+##  $ LONGITUDE : num  8812 8755 8742 8626 8642 ...
+##  $ LATITUDE_E: num  3051 0 0 0 0 ...
+##  $ LONGITUDE_: num  8806 0 0 0 0 ...
+##  $ REMARKS   : Factor w/ 436781 levels "","\t","\t\t",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ REFNUM    : num  1 2 3 4 5 6 7 8 9 10 ...
 ```
 
 #### Subset the data
@@ -80,12 +103,9 @@ END_TIME.  The BGN_DATE, BGN_TIME, along with a TIME_ZONE are consistently popul
 This is not true for END_DATE and END_TIME.  As there is not a good way to populate or 
 impute appropriate values, these variables provide little value towards analyziing the 
 event types in the dataset.  These veariables, therefore, will be removed from subset.
-```{r missing_end_dates, include = TRUE, echo = FALSE}
-no.missing <- sum(ifelse(StormData$END_DATE %in% c("", " ", "NA", "NaN"), 1, 0))
-pct.missing <- no.missing / length(StormData$END_DATE)
-```
 
-For END_DATE, there are `r no.missing` missing dates, or `r pct.missing` percent of total.
+
+For END_DATE, there are 2.43411\times 10^{5} missing dates, or 0.2697682 percent of total.
 
 The other consideration for dates / times is relevance of the data.  The data includes 
 data between 1950 - 2011.  Because of shifting populations over time the data for events 
@@ -94,7 +114,8 @@ population health represented by an event. Data for dates prior to 1990 are remo
 the subset.
 
 ###### Format dates to exclude experience prior to 1990
-```{r event_dates, include = TRUE}
+
+```r
 StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
 StormData$BGN_YEAR <- format(StormData$BGN_DATE, "%Y")
 StormData$hour <- as.numeric(substr(StormData$BGN_TIME, 1, 2))
@@ -130,7 +151,8 @@ The final processing of the dataset is to limit the final dataset to data to BGN
 on or after "1990-01-01".  Although data captures events as early as 1950, there have  
 been significant shifts in population density and development that may distort results  
 by including the earlier years.
-```{r subset_storm_data, include = TRUE, cache = TRUE}
+
+```r
 subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
                        FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
@@ -141,13 +163,33 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
 
 ** EXHIBIT 2: Overview of data subset
 ###### Data Subset Dimensions
-```{r data_subset_dimensions, echo = FALSE}
-dim(subStormData)
+
+```
+## [1] 751740     18
 ```
 
 ###### Variable Names & Formats in Data Subset
-```{r data_subset_names_formats, echo = FALSE}
-str(subStormData)
+
+```
+## 'data.frame':	751740 obs. of  18 variables:
+##  $ REFNUM    : num  188879 188881 188882 188774 188777 ...
+##  $ BGN_YEAR  : chr  "1993" "1993" "1993" "1994" ...
+##  $ BGN_DATE  : Date, format: "1993-02-01" "1993-02-05" ...
+##  $ BGN_TIME  : chr  "12:00 AM" "12:00 AM" "12:00 AM" "2:00 PM" ...
+##  $ TIME_ZONE : Factor w/ 22 levels "ADT","AKS","AST",..: 3 3 3 3 3 3 3 3 3 3 ...
+##  $ STATE     : Factor w/ 72 levels "AK","AL","AM",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ COUNTYNAME: Factor w/ 29601 levels "","5NM E OF MACKINAC BRIDGE TO PRESQUE ISLE LT MI",..: 21 21 21 21 21 21 21 21 21 21 ...
+##  $ LATITUDE  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ LONGITUDE : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ EVTYPE    : Factor w/ 985 levels "   HIGH SURF ADVISORY",..: 30 30 30 30 30 30 30 30 30 30 ...
+##  $ F         : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ MAG       : num  0 0 0 0 0 0 30 46 0 0 ...
+##  $ FATALITIES: num  0 0 0 0 0 0 0 0 1 0 ...
+##  $ INJURIES  : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ PROPDMG   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ PROPDMGEXP: Factor w/ 19 levels "","-","?","+",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ CROPDMG   : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ CROPDMGEXP: Factor w/ 9 levels "","?","0","2",..: 1 1 1 1 1 1 1 1 1 1 ...
 ```
 
 
@@ -157,7 +199,8 @@ example, the dollar amounts for property damage are expressed in different denom
 (e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
 so that dollars can be combined, or summed, for different levels of aggregation, as  
 appropriate.
-```{r economic_measure, include = TRUE}
+
+```r
 subStormData$PROPDMG <- subStormData$PROPDMG * 
                         ifelse(subStormData$PROPDMGEXP %in% c("h","H"), 100,
                         ifelse(subStormData$PROPDMGEXP %in% c("k", "K"), 1000,
@@ -173,10 +216,8 @@ subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 ```
 
 #### Standardizing Event Type
-```{r unique_evtype_in_data, echo = FALSE}
-events <- length(unique(subStormData$EVTYPE))
-```
-In the dataset provided, there are `r events` unique EVTYPE, defining the types of events 
+
+In the dataset provided, there are 985 unique EVTYPE, defining the types of events 
 that have occurred.  According to the National Weather Service Instruction 10-165 
 released on August 17, 2007, events should fit into one of 48 event types or categories.  
 
@@ -184,7 +225,8 @@ The following steps reflect an effort to more consistently define the actual lis
 event types in the data with recommended list.  This represents a 'best effort' to 
 improve the quality of the data.  Ideally, a mapping would be provided by the owner of 
 the dataset to ensure a more accurrate cross-walk.  
-```{r event_type_clean_up, include = TRUE}
+
+```r
 subStormData$EVENT_TYPE <- ifelse(grepl("TORNADO", subStormData$EVTYPE, 
                                           ignore.case = TRUE), "Tornado",
                               ifelse(grepl("TYPHOON", subStormData$EVTYPE,
@@ -334,10 +376,10 @@ sub.obs <- length(subStormData$EVENT_TYPE)   ## Total observations in data subse
 pct.other <- round((other.obs / sub.obs) * 100, digits = 1)   ## % in 'Other Event'
 ```
 
-The mapping, or cross-walk, logic outlined above reduces the `r events` unique events 
-orginally defined in the Storm Data subset, subStormData, to only `r unique.events`.  
+The mapping, or cross-walk, logic outlined above reduces the 985 unique events 
+orginally defined in the Storm Data subset, subStormData, to only 42.  
 This includes 41 of the 48 defined event types plus a catch-all 'Other Event' category.  
-Only `r pct.other` of the events, or observations, were not assigned to a specific 
+Only 3.9 of the events, or observations, were not assigned to a specific 
 category, but 'Other Event'.
 
 
@@ -358,7 +400,8 @@ Below we create two tables that represent the total and average cost of damages 
 for each event during the period 1990 - 2011.
 
 ###### Total Damage for Each Event (Economic Consequences)
-```{r economic_consequences_sum, include = TRUE}
+
+```r
 economic.sum <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 economic.sum <- economic.sum[order(economic.sum$TTLDMG, decreasing = TRUE),]
@@ -370,7 +413,8 @@ economic.sum10 <- economic.sum10[1:10,]     ## Top 10 Event Types excluding 'Oth
 ```
 
 ###### Average Damage for each reported occurrence of Event Type
-```{r economic_consequences_mean, include = TRUE}
+
+```r
 economic.mean <- aggregate(TTLDMG ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) mean=mean(x))
 economic.mean <- economic.mean[order(economic.mean$TTLDMG, decreasing = TRUE),]
@@ -388,17 +432,50 @@ observations of an event and the average damage cost per reported observation be
 total economic consequence for this period, there are several other events that create 
 a higher average damage cost per report occurrence.
 
-```{r economic_consequence_report, echo = FALSE}
-economic.report <- merge(economic.sum, economic.mean, by = "EVENT_TYPE")
-economic.report <- setnames(economic.report, 
-                            old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG_M", "TTL_DOLLARS",
-                                    "TTLDMG.y", "AVGDMG_K", "AVG_DOLLARS"),
-                            new = c("EVENT_TYPE", "TTL_DMG", "TTLDMG_M", "TTL_Millions",
-                                    "AVG_DMG", "AVGDMG_K", "AVG_THSND"))
-economic.report <- economic.report[order(economic.report$TTL_DMG, decreasing = TRUE),]
-economic.report <- subset(economic.report, EVENT_TYPE != "Other Event")
-economic.report <- select(economic.report, EVENT_TYPE, TTL_Millions, AVG_THSND)
-economic.report
+
+```
+##                 EVENT_TYPE TTL_Millions AVG_THSND
+## 13                   Flood     $161,096    $5,448
+## 24      Hurricane(Typhoon)      $72,515  $732,472
+## 33        Storm Surge/Tide      $47,967  $114,207
+## 36                 Tornado      $32,532    $1,091
+## 17                    HAIL      $19,021       $79
+## 12             Flash Flood      $18,440      $331
+## 23               Hurricane      $18,358   $91,789
+## 7                  Drought      $15,026    $5,330
+## 35       Thunderstorm Wind      $12,248       $46
+## 40                Wildfire       $8,905    $2,100
+## 22               High Wind       $6,657      $295
+## 20              Heavy Rain       $4,196      $342
+## 15          Frost / Freeze       $2,016    $1,341
+## 11 Extreme Cold/Wind Chill       $1,389      $834
+## 21              Heavy Snow       $1,082       $69
+## 27               Lightning         $946       $60
+## 3                 Blizzard         $772      $281
+## 10          Excessive Heat         $500      $298
+## 4            Coastal Flood         $442      $463
+## 18                    Heat         $424      $447
+## 5          Cold/Wind Chill         $274      $328
+## 34             Strong Wind         $252       $66
+## 38                 Tsunami         $144    $7,204
+## 25        Lake-effect Snow          $41       $59
+## 6                Dense Fog          $23       $12
+## 41            Winter Storm          $22       $21
+## 42          Winter Weather          $10       $75
+## 9               Dust Storm           $9       $21
+## 2                Avalanche           $9       $23
+## 26         Lakeshore Flood           $8      $315
+## 14            Freezing Fog           $2       $47
+## 29        Marine High Wind           $1       $10
+## 8               Dust Devil           $1        $5
+## 32                   Sleet           $1        $6
+## 39            Volcanic Ash           $0       $17
+## 30      Marine Strong Wind           $0        $9
+## 1    Astronomical Low Tide           $0        $2
+## 16            Funnel Cloud           $0        $0
+## 28             Marine Hail           $0        $0
+## 19                    HEAT           $0        $0
+## 37          Tropical Storm           $0        $0
 ```
 
 
@@ -410,7 +487,8 @@ represents the primary metric to measure the hazard level of an event.  If two e
 have the same number of fatalities, injuries are considered in the assessment.
 
 ###### Total Number of Fatalities reported for Each Event 
-```{r hazard_population_health_total, include = TRUE}
+
+```r
 fatality.sum <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 fatality.sum <- fatality.sum[order(fatality.sum$FATALITIES, decreasing = TRUE),]
@@ -419,7 +497,8 @@ fatality.sum10 <- fatality.sum10[1:10,]
 ```
 
 ###### Average Number of Fatalities, per occurrence, reported for Each Event 
-```{r hazard_population_health_average, include = TRUE}
+
+```r
 fatality.mean <- aggregate(FATALITIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) mean=mean(x))
 fatality.mean <- fatality.mean[order(fatality.mean$FATALITIES, decreasing = TRUE),]
@@ -428,7 +507,8 @@ fatality.mean10 <- fatality.mean10[1:10,]
 ```
 
 ###### Total Number of Injuries reported for Each Event 
-```{r hazard_population_health_injury, include = TRUE}
+
+```r
 injury.sum <- aggregate(INJURIES ~ EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
 injury.sum <- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]
@@ -446,17 +526,51 @@ Excessive Heat represents the greatest hazard to population health.  If injuries
 considered, Tornados, may be thought to represent a greater hazard to population health 
 due to the significantly higher reported injuries.
 
-```{r hazard_population_health_review, echo = FALSE}
-event.fatality <- merge(fatality.sum, fatality.mean, by = "EVENT_TYPE")
-event.fatality <- setnames(event.fatality, old = c("EVENT_TYPE", "FATALITIES.x", 
-                                                   "FATALITIES.y"),
-                                          new = c("EVENT_TYPE", "TTL_FATALITY", 
-                                                  "AVG_FATALITY"))
 
-pophlth.smry <- merge(event.fatality, injury.sum, by = "EVENT_TYPE")
-pophlth.smry <- pophlth.smry[order(pophlth.smry$TTL_FATALITY, pophlth.smry$INJURIES,
-                                                decreasing = TRUE),]
-pophlth.smry
+```
+##                 EVENT_TYPE TTL_FATALITY AVG_FATALITY INJURIES
+## 10          Excessive Heat         1920 1.142177e+00     6525
+## 36                 Tornado         1780 5.970750e-02    26735
+## 31             Other Event         1293 4.357203e-02     5667
+## 18                    Heat         1212 1.275789e+00     2684
+## 12             Flash Flood         1035 1.859037e-02     1802
+## 27               Lightning          817 5.183024e-02     5231
+## 35       Thunderstorm Wind          552 2.084191e-03     7609
+## 13                   Flood          512 1.731485e-02     6874
+## 22               High Wind          343 1.520188e-02     1586
+## 11 Extreme Cold/Wind Chill          287 1.721656e-01      255
+## 2                Avalanche          224 5.788114e-01      171
+## 5          Cold/Wind Chill          171 2.047904e-01       65
+## 21              Heavy Snow          129 8.166624e-03     1034
+## 34             Strong Wind          111 2.928760e-02      301
+## 20              Heavy Rain          108 8.799804e-03      303
+## 3                 Blizzard          101 3.680758e-02      805
+## 40                Wildfire           90 2.122642e-02     1608
+## 6                Dense Fog           80 4.357298e-02     1076
+## 23               Hurricane           71 3.550000e-01       53
+## 24      Hurricane(Typhoon)           64 6.464646e-01     1280
+## 7                  Drought           38 1.347996e-02       48
+## 38                 Tsunami           33 1.650000e+00      129
+## 33        Storm Surge/Tide           24 5.714286e-02       43
+## 9               Dust Storm           22 5.011390e-02      440
+## 17                    HAIL           15 6.220866e-05     1149
+## 41            Winter Storm           15 1.403181e-02      127
+## 30      Marine Strong Wind           14 2.916667e-01       22
+## 42          Winter Weather           10 7.751938e-02        4
+## 4            Coastal Flood            6 6.282723e-03        7
+## 32                   Sleet            4 3.418803e-02       15
+## 8               Dust Devil            2 1.333333e-02       43
+## 15          Frost / Freeze            2 1.329787e-03        4
+## 29        Marine High Wind            1 7.407407e-03        1
+## 37          Tropical Storm            1 1.000000e+00        0
+## 16            Funnel Cloud            0 0.000000e+00        3
+## 1    Astronomical Low Tide            0 0.000000e+00        0
+## 14            Freezing Fog            0 0.000000e+00        0
+## 19                    HEAT            0 0.000000e+00        0
+## 25        Lake-effect Snow            0 0.000000e+00        0
+## 26         Lakeshore Flood            0 0.000000e+00        0
+## 28             Marine Hail            0 0.000000e+00        0
+## 39            Volcanic Ash            0 0.000000e+00        0
 ```
 
 
@@ -468,19 +582,26 @@ the hazard to population health, the graph illustrates the number of fatalities 
 event.  Information is captured in bar plots.
 
 ###### PLOT 2: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
-```{r bar_plot_event_impacts,fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+
+```r
 par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 #theme_update(plot.title = element.text(hjust = 0.5))
 ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
       labs(title = "Total Damage for Top 10 Events") +
       labs(x = "Event", y = "Total Damage(in millions)")
+```
 
+![](figure/bar_plot_event_impacts-1.png)<!-- -->
+
+```r
 ggplot(fatality.sum10, aes(x=EVENT_TYPE, y=FATALITIES, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
       labs(title = "Total Fatalities for Top 10 Events") +
       labs(x = "Event", y = "Total Fatalities")
 ```
+
+![](figure/bar_plot_event_impacts-2.png)<!-- -->
 
 
 #### A Closer Look at the data by Year
@@ -493,21 +614,11 @@ In Exhbit 6 below, the information, Total Damage & Total Fatalities, is illustra
 each year of the Top 10 Event Types.  The key observation of these plots is how outliers 
 may be influencing our results.
 
-```{r plot_by_year_data_smry, echo = FALSE}
-top10DMG <- c(economic.sum10$EVENT_TYPE)
-event.dmg <- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
-                                    FUN = function(x) sum=sum(x))
-event.dmg10 <- subset(event.dmg, EVENT_TYPE %in% c(top10DMG))
-event.dmg10$DMG_AMT <- round(event.dmg10$TTLDMG / 1000000, digits = 3)
 
-top10Fatality <- c(fatality.sum10$EVENT_TYPE)
-event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
-                                    FUN = function(x) sum=sum(x))
-event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
-```
 
 ###### PLOT 2: Plot results for top 10 Event Types, by Year
-```{r plot_event_by_year, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
+
+```r
 par(mfrow = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 #theme_update(plot.title = element.text(hjust = 0.5))
 ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
@@ -515,13 +626,19 @@ ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_
                   geom_point() +
                   labs(title = "Total Damage for Top 10 Events") +
                   labs(x = "Measurement Year", y = "Total Damage(in millions)")
+```
 
+![](figure/plot_event_by_year-1.png)<!-- -->
+
+```r
 ggplot(event.fatality10, aes(x=BGN_YEAR, y=FATALITIES, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
                   geom_point() +
                   labs(title = "Total Fatalities for Top 10 Events") +
                   labs(x = "Measurement Year", y = "Total Fatalities")
 ```
+
+![](figure/plot_event_by_year-2.png)<!-- -->
 
 ###### Adjusting for Outlier
 Removing, or adjusting for, the outlier year provides a new perspective to look at the 
@@ -536,7 +653,8 @@ minimize the statistical modeling, the outlier represents the yaar with the grea
 economic consequence or hazard to population health, each separately, for an event type.  
 
 ###### Maximum, outlier, value for each Event Type
-```{r event_type_outlier, include = TRUE}
+
+```r
 economic.max <- aggregate(TTLDMG ~ EVENT_TYPE, data = event.dmg, 
                                           FUN = function(x) max=max(x))
 fatality.max <- aggregate(FATALITIES ~ EVENT_TYPE, data = event.fatality, 
@@ -558,7 +676,8 @@ FLOOD still has the greatest economic consequence, but less significantly over t
 highest total damage after outlier adjustment.  It is worth noting that the outlier 
 adjustment applied to each of the event types.  Hurricane (Typhoon) is another Event Type 
 where the outlier adjustment made a significant change in Total Damage.
-```{r economic.adjust, include = TRUE}
+
+```r
 economic.adj <- merge(economic.mean, economic.max, by = "EVENT_TYPE")
 economic.adj <- select(economic.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
 economic.adj <- setnames(economic.adj, old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG.y"),
@@ -575,8 +694,31 @@ economic.adj.smry <-
 economic.adj.smry <- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]
 ```
 
-```{r economic_adjust_table, echo = FALSE}
-economic.adj.smry[1:20,]
+
+```
+## # A tibble: 20 × 3
+##                 EVENT_TYPE     TTL_INIT     TTL_ADJ
+##                      <chr>        <dbl>       <dbl>
+## 1                    Flood 161096225385 44490402907
+## 2                  Tornado  32531914379 22682043914
+## 3       Hurricane(Typhoon)  72514767800 21447923202
+## 4              Other Event  24615159011 19327810301
+## 5              Flash Flood  18439625337 16278348414
+## 6                     HAIL  19021448166 15515437102
+## 7                Hurricane  18357760010 12908482810
+## 8                  Drought  15025675380 12532875524
+## 9        Thunderstorm Wind  12247826644 10182079061
+## 10                Wildfire   8904910130  6544232515
+## 11        Storm Surge/Tide  47966945150  5022587162
+## 12               High Wind   6656588443  3140050615
+## 13          Frost / Freeze   2016273000  1500313607
+## 14              Heavy Rain   4195983490  1488038377
+## 15              Heavy Snow   1082180252   876852211
+## 16               Lightning    945814537   855195868
+## 17 Extreme Cold/Wind Chill   1389458400   791031908
+## 18                Blizzard    771973950   409517282
+## 19           Coastal Flood    442097060   326079989
+## 20         Cold/Wind Chill    273936500   150264568
 ```
 
 
@@ -588,7 +730,8 @@ years of the event type.
 
 EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
 fatalities for the event type between 1990 - 2011.
-```{r fatality.adjust, include = TRUE}
+
+```r
 fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
 fatality.adj <- select(fatality.adj, EVENT_TYPE, FATALITIES.x, FATALITIES.y)
 fatality.adj <- setnames(fatality.adj, old = c("EVENT_TYPE", "FATALITIES.x", "FATALITIES.y"),
@@ -605,8 +748,31 @@ fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_ADJ,
                                                             decreasing = TRUE),]
 ```
 
-```{r fatality_adjust_table, echo = FALSE}
-fatality.adj.smry[1:20,]
+
+```
+## # A tibble: 20 × 3
+##                 EVENT_TYPE FATALITY_INIT FATALITY_ADJ
+##                      <chr>         <dbl>        <dbl>
+## 1           Excessive Heat          1920   1421.14218
+## 2                  Tornado          1780   1193.05971
+## 3              Other Event          1293   1190.04357
+## 4              Flash Flood          1035    943.01859
+## 5                Lightning           817    738.05183
+## 6        Thunderstorm Wind           552    495.00208
+## 7                    Flood           512    446.01731
+## 8                High Wind           343    299.01520
+## 9                     Heat          1212    274.27579
+## 10 Extreme Cold/Wind Chill           287    237.17217
+## 11               Avalanche           224    198.57881
+## 12         Cold/Wind Chill           171    140.20479
+## 13              Heavy Snow           129    103.00817
+## 14              Heavy Rain           108     79.00880
+## 15             Strong Wind           111     77.05858
+## 16                Blizzard           101     71.03681
+## 17                Wildfire            90     66.02123
+## 18               Dense Fog            80     58.04357
+## 19               Hurricane            71     35.35500
+## 20      Hurricane(Typhoon)            64     30.64646
 ```
 
 
