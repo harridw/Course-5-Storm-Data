@@ -228,13 +228,8 @@ StormData$BGN_TIME &lt;- paste(StormData$hour, &quot;:&quot;, StormData$minute, 
 </div>
 <div id="creating-the-subset" class="section level4">
 <h4>Creating the subset</h4>
-<p>We will not be keeping many of the poorly populated variables provided in the zip file<br />
-we received. They do not lend themselves to a further understanding of the questions<br />
-for analysis.</p>
-<p>The final processing of the dataset is to limit the final dataset to data to BGN_Dates<br />
-on or after “1990-01-01”. Although data captures events as early as 1950, there have<br />
-been significant shifts in population density and development that may distort results<br />
-by including the earlier years.</p>
+<p>We will not be keeping many of the poorly populated variables provided in the zip file we received. They do not lend themselves to a further understanding of the questions for analysis.</p>
+<p>The final processing of the dataset is to limit the final dataset to data to BGN_Dates on or after “1990-01-01”. Although data captures events as early as 1950, there have been significant shifts in population density and development that may distort results by including the earlier years.</p>
 <pre class="r"><code>subStormData &lt;- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
                        FATALITIES, INJURIES, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP)
@@ -482,6 +477,16 @@ economic.mean10 &lt;- economic.mean10[1:10,]   ## Top 10 Event Types excluding '
 <p>The following table shows both the total damage cost, property + crop, across all observations of an event and the average damage cost per reported observation between 1990 - 2011. As the table illustrates, although ‘Flood’ events have created the greatest total economic consequence for this period, there are several other events that create a higher average damage cost per report occurrence.</p>
 <p>This exhibit lists the total damage for each event type. A few notes about the chart 1. Results listed in descending order based on Total Damage, TTL_Millions 2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.<br />
 3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.</p>
+<pre class="r"><code>economic.report &lt;- merge(economic.sum, economic.mean, by = &quot;EVENT_TYPE&quot;)
+economic.report &lt;- setnames(economic.report, 
+                            old = c(&quot;EVENT_TYPE&quot;, &quot;TTLDMG.x&quot;, &quot;TTLDMG_M&quot;, &quot;TTL_DOLLARS&quot;,
+                                    &quot;TTLDMG.y&quot;, &quot;AVGDMG_K&quot;, &quot;AVG_DOLLARS&quot;),
+                            new = c(&quot;EVENT_TYPE&quot;, &quot;TTL_DMG&quot;, &quot;TTLDMG_M&quot;, &quot;TTL_Millions&quot;,
+                                    &quot;AVG_DMG&quot;, &quot;AVGDMG_K&quot;, &quot;AVG_THSND&quot;))
+economic.report &lt;- economic.report[order(economic.report$TTL_DMG, decreasing = TRUE),]
+economic.report &lt;- subset(economic.report, EVENT_TYPE != &quot;Other Event&quot;)
+economic.report &lt;- select(economic.report, EVENT_TYPE, TTL_Millions, AVG_THSND)
+economic.report</code></pre>
 <pre><code>##                 EVENT_TYPE TTL_Millions AVG_THSND
 ## 13                   Flood     $161,096    $5,448
 ## 24      Hurricane(Typhoon)      $72,515  $732,472
@@ -559,6 +564,16 @@ injury.sum &lt;- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]</cod
 <p>Event Types reported in this table are: 1. Based on total number of reported fatalities, descending order.<br />
 2. Average number of fatalities in each event occurrence.<br />
 3. Total number of injuries</p>
+<pre class="r"><code>event.fatality &lt;- merge(fatality.sum, fatality.mean, by = &quot;EVENT_TYPE&quot;)
+event.fatality &lt;- setnames(event.fatality, old = c(&quot;EVENT_TYPE&quot;, &quot;FATALITIES.x&quot;, 
+                                                   &quot;FATALITIES.y&quot;),
+                                          new = c(&quot;EVENT_TYPE&quot;, &quot;TTL_FATALITY&quot;, 
+                                                  &quot;AVG_FATALITY&quot;))
+
+pophlth.smry &lt;- merge(event.fatality, injury.sum, by = &quot;EVENT_TYPE&quot;)
+pophlth.smry &lt;- pophlth.smry[order(pophlth.smry$TTL_FATALITY, pophlth.smry$INJURIES,
+                                                decreasing = TRUE),]
+pophlth.smry</code></pre>
 <pre><code>##                 EVENT_TYPE TTL_FATALITY AVG_FATALITY INJURIES
 ## 10          Excessive Heat         1920 1.142177e+00     6525
 ## 36                 Tornado         1780 5.970750e-02    26735
@@ -606,10 +621,9 @@ injury.sum &lt;- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]</cod
 <div id="panel-plot-of-economic-consequences-hazard-to-population-health" class="section level4">
 <h4>Panel Plot of Economic Consequences &amp; Hazard to Population Health</h4>
 <p>There are 4 individual plots included in this panel plot. The four plots reflect the sum, or total, and mean economic consequences, property damage (PROPDMG) and crop damage (CROPDMG). The plot represent the combined values rather than each separately. For the hazard to population health, the graph illustrates the number of fatalities for the event. Information is captured in bar plots.</p>
-<div id="plot-2-bar-plots-representing-total-damages-fatalities-for-top-10-event-type" class="section level5">
-<h5>PLOT 2: Bar Plots representing Total Damages &amp; Fatalities for Top 10 Event Type</h5>
-<pre class="r"><code>par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
-#theme_update(plot.title = element.text(hjust = 0.5))
+<div id="plot-1-bar-plots-representing-total-damages-fatalities-for-top-10-event-type" class="section level5">
+<h5>PLOT 1: Bar Plots representing Total Damages &amp; Fatalities for Top 10 Event Type</h5>
+<pre class="r"><code>par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = &quot;identity&quot;) +
       labs(title = &quot;Total Damage for Top 10 Events&quot;) +
@@ -625,11 +639,10 @@ ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
 <div id="a-closer-look-at-the-data-by-year" class="section level4">
 <h4>A Closer Look at the data by Year</h4>
 <p>Although we are able to conclude that ‘Floods’ have created the greatest economic economic consequence and ‘Excessive Heat’ the greatest hazard to population health, it is helpful to understand how these results might fluctuate by year, year associated with the reported BGN_DATE of an Event.</p>
-<p>In Exhbit 6 below, the information, Total Damage &amp; Total Fatalities, is illustrated for each year of the Top 10 Event Types. The key observation of these plots is how outliers may be influencing our results.</p>
-<div id="plot-2-plot-results-for-top-10-event-types-by-year" class="section level6">
-<h6>PLOT 2: Plot results for top 10 Event Types, by Year</h6>
-<pre class="r"><code>par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
-#theme_update(plot.title = element.text(hjust = 0.5))
+<p>In PLOT 2 below, the information, Total Damage &amp; Total Fatalities, is illustrated for each year of the Top 10 Event Types. The key observation of these plots is how outliers may be influencing our results.</p>
+<div id="plot-2-plot-results-for-top-10-event-types-by-year" class="section level5">
+<h5>PLOT 2: Plot results for top 10 Event Types, by Year</h5>
+<pre class="r"><code>par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
                   geom_point() +

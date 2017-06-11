@@ -126,14 +126,15 @@ greatest economic consequences or hazard to population health.  Results will eva
 across all markets combined.
 
 #### Creating the subset
-We will not be keeping many of the poorly populated variables provided in the zip file  
-we received.  They do not lend themselves to a further understanding of the questions  
-for analysis.  
+We will not be keeping many of the poorly populated variables provided in the zip file 
+we received.  They do not lend themselves to a further understanding of the questions 
+for analysis. 
 
-The final processing of the dataset is to limit the final dataset to data to BGN_Dates  
-on or after "1990-01-01".  Although data captures events as early as 1950, there have  
-been significant shifts in population density and development that may distort results  
-by including the earlier years.
+The final processing of the dataset is to limit the final dataset to data to BGN_Dates 
+on or after "1990-01-01".  Although data captures events as early as 1950, there have 
+been significant shifts in population density and development that may distort results 
+by including the earlier years. 
+
 ```{r subset_storm_data, include = TRUE, cache = TRUE}
 subStormData <- select(StormData, REFNUM, BGN_YEAR, BGN_DATE, BGN_TIME, TIME_ZONE,
                        STATE, COUNTYNAME, LATITUDE, LONGITUDE, EVTYPE, F, MAG,
@@ -398,7 +399,7 @@ This exhibit lists the total damage for each event type.  A few notes about the 
 2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.  
 3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.
 
-```{r economic_consequence_report, echo = FALSE}
+```{r economic_consequence_report, echo = TRUE}
 economic.report <- merge(economic.sum, economic.mean, by = "EVENT_TYPE")
 economic.report <- setnames(economic.report, 
                             old = c("EVENT_TYPE", "TTLDMG.x", "TTLDMG_M", "TTL_DOLLARS",
@@ -461,7 +462,7 @@ Event Types reported in this table are:
 2. Average number of fatalities in each event occurrence.  
 3. Total number of injuries
 
-```{r hazard_population_health_review, echo = FALSE}
+```{r hazard_population_health_review, echo = TRUE}
 event.fatality <- merge(fatality.sum, fatality.mean, by = "EVENT_TYPE")
 event.fatality <- setnames(event.fatality, old = c("EVENT_TYPE", "FATALITIES.x", 
                                                    "FATALITIES.y"),
@@ -482,15 +483,13 @@ sum, or total, and mean economic consequences, property damage (PROPDMG) and cro
 the hazard to population health, the graph illustrates the number of fatalities for the 
 event.  Information is captured in bar plots.
 
-##### PLOT 2: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
+##### PLOT 1: Bar Plots representing Total Damages & Fatalities for Top 10 Event Type
 ```{r bar_plot_event_impacts,fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
-#theme_update(plot.title = element.text(hjust = 0.5))
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
       labs(title = "Total Damage for Top 10 Events") +
       labs(x = "Event", y = "Total Damage(in millions)")
-
 ggplot(fatality.sum10, aes(x=EVENT_TYPE, y=FATALITIES, group=EVENT_TYPE)) +
       geom_bar(aes(fill = EVENT_TYPE), stat = "identity") +
       labs(title = "Total Fatalities for Top 10 Events") +
@@ -504,7 +503,7 @@ economic consequence and 'Excessive Heat' the greatest hazard to population heal
 helpful to understand how these results might fluctuate by year, year associated with the 
 reported BGN_DATE of an Event.
 
-In Exhbit 6 below, the information, Total Damage & Total Fatalities, is illustrated for 
+In PLOT 2 below, the information, Total Damage & Total Fatalities, is illustrated for 
 each year of the Top 10 Event Types.  The key observation of these plots is how outliers 
 may be influencing our results.
 
@@ -521,16 +520,14 @@ event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormD
 event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
 ```
 
-###### PLOT 2: Plot results for top 10 Event Types, by Year
+##### PLOT 2: Plot results for top 10 Event Types, by Year
 ```{r plot_event_by_year, fig.keep = "all", fig.show = "asis", fig.path = 'figure/'}
-par(mfcol = c(2, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
-#theme_update(plot.title = element.text(hjust = 0.5))
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
                   geom_point() +
                   labs(title = "Total Damage for Top 10 Events") +
                   labs(x = "Measurement Year", y = "Total Damage(in millions)")
-
 ggplot(event.fatality10, aes(x=BGN_YEAR, y=FATALITIES, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
                   geom_point() +
