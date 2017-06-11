@@ -90,9 +90,9 @@ also facilitates the effort to clean-up the data for further review and analysis
 ##### Date / time variables  
 There are two areas for clean-up, or defining subset, of the original file with respect 
 to dates and/or times provided.  Key to these decisions to include or remove is whether 
-the information supports the analysis.
+the information supports the analysis.  A statement about time of an event provided by  
+National Weather Service:
 
-## An overview of event time from the National Weather Service:  
 "In general, the time of an event, as it appears in the header-strip, is the time when 
 the event reached locally, regionally, or nationally established advisory or warning 
 criteria (exceptions defined in Section 2.3.1). The event time could be the single time 
@@ -117,7 +117,7 @@ prior to 1990 are not as relevant to evaluating the economic consequences or haz
 population health represented by an event. Data for dates prior to 1990 are removed from 
 the subset.
 
-##### Format dates to exclude experience prior to 1990
+##### Format dates to exclude experience prior to 1990  
 
 ```r
 StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, "%m/%d/%Y")
@@ -223,7 +223,8 @@ subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 
 In the dataset provided, there are 985 unique EVTYPE, defining the types of events 
 that have occurred.  According to the National Weather Service Instruction 10-165 
-released on August 17, 2007, events should fit into one of 48 event types or categories.  
+released on August 17, 2007, events should fit into one of 48 event types or categories  
+that have been defined.
 
 The following steps reflect an effort to more consistently define the actual list of 
 event types in the data with recommended list.  This represents a 'best effort' to 
@@ -436,6 +437,11 @@ observations of an event and the average damage cost per reported observation be
 total economic consequence for this period, there are several other events that create 
 a higher average damage cost per report occurrence.
 
+This exhibit lists the total damage for each event type.  A few notes about the chart
+1. Results listed in descending order based on Total Damage, TTL_Millions
+2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.  
+3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.
+
 
 ```
 ##                 EVENT_TYPE TTL_Millions AVG_THSND
@@ -529,6 +535,11 @@ Based on the total number of fatalities reported for each event type during this
 Excessive Heat represents the greatest hazard to population health.  If injuries are 
 considered, Tornados, may be thought to represent a greater hazard to population health 
 due to the significantly higher reported injuries.
+
+Event Types reported in this table are:
+1. Based on total number of reported fatalities, descending order.  
+2. Average number of fatalities in each event occurrence.  
+3. Total number of injuries
 
 
 ```
@@ -681,6 +692,11 @@ highest total damage after outlier adjustment.  It is worth noting that the outl
 adjustment applied to each of the event types.  Hurricane (Typhoon) is another Event Type 
 where the outlier adjustment made a significant change in Total Damage.
 
+This table lists comparison of economic consequences for each event type:
+1. Compares Total Damages inclusive of outlier, before adjustment  [TTL_INIT]
+2. Total Damages with outliers adjusted to mean  [TTL_ADJ], in descending order
+
+
 ```r
 economic.adj <- merge(economic.mean, economic.max, by = "EVENT_TYPE")
 economic.adj <- select(economic.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
@@ -734,6 +750,11 @@ years of the event type.
 
 EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
 fatalities, for the event type between 1990 - 2011.
+
+This table lists comparison of fatalities for each event type:
+1. Compares Total Fatalities inclusive of outlier, before adjustment  [TTL_INIT]
+2. Total Fatalities with outliers adjusted to mean  [TTL_ADJ], in descending order
+
 
 ```r
 fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
