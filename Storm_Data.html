@@ -125,6 +125,81 @@ $(document).ready(function () {
 
 <div id="packages-for-course-5-project-2" class="section level2">
 <h2>Packages for Course 5 Project 2</h2>
+<pre class="r"><code>ipak &lt;- function(pkg){
+      new.pkg &lt;- pkg[!(pkg %in% installed.packages()[, &quot;Package&quot;])]
+      if (length(new.pkg)) 
+            install.packages(new.pkg, dependencies = TRUE)
+      sapply(pkg, require, character.only = TRUE)
+}
+
+### Package Usage
+packages &lt;- c(&quot;plyr&quot;, &quot;dplyr&quot;, &quot;data.table&quot;, &quot;dtplyr&quot;, &quot;lubridate&quot;, &quot;ggplot2&quot;, &quot;scales&quot;,
+                  &quot;reshape2&quot;, &quot;knitr&quot;, &quot;R.cache&quot;, &quot;stringr&quot;, &quot;gtools&quot;, &quot;quantreg&quot;)
+ipak(packages)</code></pre>
+<pre><code>## Loading required package: plyr</code></pre>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## 
+## Attaching package: 'dplyr'</code></pre>
+<pre><code>## The following objects are masked from 'package:plyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize</code></pre>
+<pre><code>## The following objects are masked from 'package:stats':
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre><code>## Loading required package: data.table</code></pre>
+<pre><code>## -------------------------------------------------------------------------</code></pre>
+<pre><code>## data.table + dplyr code now lives in dtplyr.
+## Please library(dtplyr)!</code></pre>
+<pre><code>## -------------------------------------------------------------------------</code></pre>
+<pre><code>## 
+## Attaching package: 'data.table'</code></pre>
+<pre><code>## The following objects are masked from 'package:dplyr':
+## 
+##     between, first, last</code></pre>
+<pre><code>## Loading required package: dtplyr</code></pre>
+<pre><code>## Loading required package: lubridate</code></pre>
+<pre><code>## 
+## Attaching package: 'lubridate'</code></pre>
+<pre><code>## The following objects are masked from 'package:data.table':
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year</code></pre>
+<pre><code>## The following object is masked from 'package:plyr':
+## 
+##     here</code></pre>
+<pre><code>## The following object is masked from 'package:base':
+## 
+##     date</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: scales</code></pre>
+<pre><code>## Loading required package: reshape2</code></pre>
+<pre><code>## 
+## Attaching package: 'reshape2'</code></pre>
+<pre><code>## The following objects are masked from 'package:data.table':
+## 
+##     dcast, melt</code></pre>
+<pre><code>## Loading required package: knitr</code></pre>
+<pre><code>## Loading required package: R.cache</code></pre>
+<pre><code>## R.cache v0.12.0 (2015-11-12) successfully loaded. See ?R.cache for help.</code></pre>
+<pre><code>## Loading required package: stringr</code></pre>
+<pre><code>## Loading required package: gtools</code></pre>
+<pre><code>## Loading required package: quantreg</code></pre>
+<pre><code>## Loading required package: SparseM</code></pre>
+<pre><code>## 
+## Attaching package: 'SparseM'</code></pre>
+<pre><code>## The following object is masked from 'package:base':
+## 
+##     backsolve</code></pre>
+<pre><code>##       plyr      dplyr data.table     dtplyr  lubridate    ggplot2 
+##       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+##     scales   reshape2      knitr    R.cache    stringr     gtools 
+##       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+##   quantreg 
+##       TRUE</code></pre>
 </div>
 <div id="synopsis" class="section level2">
 <h2>Synopsis</h2>
@@ -147,10 +222,12 @@ population health based on number of fatalities with little economic consequence
 <h4>EXHIBIT 1: Overview of data file</h4>
 <div id="file-dimensions" class="section level6">
 <h6>File Dimensions</h6>
+<pre class="r"><code>dim(StormData)</code></pre>
 <pre><code>## [1] 902297     37</code></pre>
 </div>
 <div id="variable-names-formats" class="section level6">
 <h6>Variable Names &amp; Formats</h6>
+<pre class="r"><code>str(StormData)</code></pre>
 <pre><code>## 'data.frame':    902297 obs. of  37 variables:
 ##  $ STATE__   : num  1 1 1 1 1 1 1 1 1 1 ...
 ##  $ BGN_DATE  : Factor w/ 16335 levels &quot;1/1/1966 0:00:00&quot;,..: 6523 6523 4242 11116 2224 2224 2260 383 3980 3980 ...
@@ -241,10 +318,12 @@ subStormData &lt;- subStormData[order(subStormData$STATE, subStormData$COUNTYNAM
 <h4>EXHIBIT 2: Overview of data subset</h4>
 <div id="data-subset-dimensions" class="section level5">
 <h5>Data Subset Dimensions</h5>
+<pre class="r"><code>dim(subStormData)</code></pre>
 <pre><code>## [1] 751740     18</code></pre>
 </div>
 <div id="variable-names-formats-in-data-subset" class="section level5">
 <h5>Variable Names &amp; Formats in Data Subset</h5>
+<pre class="r"><code>str(subStormData)</code></pre>
 <pre><code>## 'data.frame':    751740 obs. of  18 variables:
 ##  $ REFNUM    : num  188879 188881 188882 188774 188777 ...
 ##  $ BGN_YEAR  : chr  &quot;1993&quot; &quot;1993&quot; &quot;1993&quot; &quot;1994&quot; ...
@@ -268,11 +347,7 @@ subStormData &lt;- subStormData[order(subStormData$STATE, subStormData$COUNTYNAM
 </div>
 <div id="standardize-dollar-amounts" class="section level4">
 <h4>Standardize Dollar Amounts</h4>
-<p>To facilitate analysis, it is necessary to modify the orginal data in some cases. As an<br />
-example, the dollar amounts for property damage are expressed in different denomiations<br />
-(e.g. thousand vs. millions of dollars). It is important to define a consistent measure<br />
-so that dollars can be combined, or summed, for different levels of aggregation, as<br />
-appropriate.</p>
+<p>To facilitate analysis, it is necessary to modify the orginal data in some cases. As an example, the dollar amounts for property damage are expressed in different denomiations (e.g. thousand vs. millions of dollars). It is important to define a consistent measure so that dollars can be combined, or summed, for different levels of aggregation, as appropriate.</p>
 <pre class="r"><code>subStormData$PROPDMG &lt;- subStormData$PROPDMG * 
                         ifelse(subStormData$PROPDMGEXP %in% c(&quot;h&quot;,&quot;H&quot;), 100,
                         ifelse(subStormData$PROPDMGEXP %in% c(&quot;k&quot;, &quot;K&quot;), 1000,
@@ -288,6 +363,7 @@ subStormData &lt;- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))</code></pre>
 </div>
 <div id="standardizing-event-type" class="section level4">
 <h4>Standardizing Event Type</h4>
+<pre class="r"><code>events &lt;- length(unique(subStormData$EVTYPE))</code></pre>
 <p>In the dataset provided, there are 985 unique EVTYPE, defining the types of events that have occurred. According to the National Weather Service Instruction 10-165 released on August 17, 2007, events should fit into one of 48 event types or categories<br />
 that have been defined.</p>
 <p>The following steps reflect an effort to more consistently define the actual list of event types in the data with recommended list. This represents a ‘best effort’ to improve the quality of the data. Ideally, a mapping would be provided by the owner of the dataset to ensure a more accurrate cross-walk.</p>
@@ -438,10 +514,7 @@ events1 &lt;- subset(subStormData, EVENT_TYPE == &quot;Other Event&quot;)  ## Ot
 other.obs &lt;- length(events1$EVENT_TYPE)  ## Total observations in 'Other Event' dataset
 sub.obs &lt;- length(subStormData$EVENT_TYPE)   ## Total observations in data subset
 pct.other &lt;- round((other.obs / sub.obs) * 100, digits = 1)   ## % in 'Other Event'</code></pre>
-<p>The mapping, or cross-walk, logic outlined above reduces the 985 unique events originally<br />
-defined in the Storm Data subset, subStormData, to only 42.<br />
-This includes 41 of the 48 defined event types plus a catch-all ‘Other Event’ category.<br />
-Only 3.9 of the events, or observations, were not assigned to a specific category, but ‘Other Event’.</p>
+<p>The mapping, or cross-walk, logic outlined above reduces the 985 unique events originally defined in the Storm Data subset, subStormData, to only 42. This includes 41 of the 48 defined event types plus a catch-all ‘Other Event’ category. Only 3.9 of the events, or observations, were not assigned to a specific category, but ‘Other Event’.</p>
 </div>
 <div id="results-analysis" class="section level3">
 <h3>Results / Analysis</h3>
@@ -475,7 +548,9 @@ economic.mean10 &lt;- economic.mean10[1:10,]   ## Top 10 Event Types excluding '
 <div id="exhibit-3-top-20-events-based-on-economic-consequences-total-damage" class="section level5">
 <h5>EXHIBIT 3: Top 20 Events based on Economic Consequences (Total Damage)</h5>
 <p>The following table shows both the total damage cost, property + crop, across all observations of an event and the average damage cost per reported observation between 1990 - 2011. As the table illustrates, although ‘Flood’ events have created the greatest total economic consequence for this period, there are several other events that create a higher average damage cost per report occurrence.</p>
-<p>This exhibit lists the total damage for each event type. A few notes about the chart 1. Results listed in descending order based on Total Damage, TTL_Millions 2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.<br />
+<p>This exhibit lists the total damage for each event type. A few notes about the chart:<br />
+1. Results listed in descending order based on Total Damage, TTL_Millions<br />
+2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.<br />
 3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.</p>
 <pre class="r"><code>economic.report &lt;- merge(economic.sum, economic.mean, by = &quot;EVENT_TYPE&quot;)
 economic.report &lt;- setnames(economic.report, 
@@ -561,7 +636,8 @@ injury.sum &lt;- injury.sum[order(injury.sum$INJURIES, decreasing = TRUE),]</cod
 <h4>EXHIBIT 4: Review Population Health Hazard for Top 20 Event Types</h4>
 <p>The following table illustrates the number of fatalities and injuries associated with each event during the stated period, 1990 - 2011. Although it might be expected that the number of injuries follows the number of fatalities (e.g. high fatality = high injury; low fatality = low injury), it is clear from the table that this relationship is not very strong, particularly where there is low mortality.</p>
 <p>Based on the total number of fatalities reported for each event type during this period Excessive Heat represents the greatest hazard to population health. If injuries are considered, Tornados, may be thought to represent a greater hazard to population health due to the significantly higher reported injuries.</p>
-<p>Event Types reported in this table are: 1. Based on total number of reported fatalities, descending order.<br />
+<p>Event Types reported in this table are:<br />
+1. Based on total number of reported fatalities, descending order.<br />
 2. Average number of fatalities in each event occurrence.<br />
 3. Total number of injuries</p>
 <pre class="r"><code>event.fatality &lt;- merge(fatality.sum, fatality.mean, by = &quot;EVENT_TYPE&quot;)
@@ -640,6 +716,16 @@ ggplot(economic.sum10, aes(x=EVENT_TYPE, y=TTLDMG_M, group=EVENT_TYPE)) +
 <h4>A Closer Look at the data by Year</h4>
 <p>Although we are able to conclude that ‘Floods’ have created the greatest economic economic consequence and ‘Excessive Heat’ the greatest hazard to population health, it is helpful to understand how these results might fluctuate by year, year associated with the reported BGN_DATE of an Event.</p>
 <p>In PLOT 2 below, the information, Total Damages, is illustrated for each year of the Top 10 Event Types. The key observation of these plots is how outliers may be influencing our results.</p>
+<pre class="r"><code>top10DMG &lt;- c(economic.sum10$EVENT_TYPE)
+event.dmg &lt;- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.dmg10 &lt;- subset(event.dmg, EVENT_TYPE %in% c(top10DMG))
+event.dmg10$DMG_AMT &lt;- round(event.dmg10$TTLDMG / 1000000, digits = 3)
+
+top10Fatality &lt;- c(fatality.sum10$EVENT_TYPE)
+event.fatality &lt;- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.fatality10 &lt;- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))</code></pre>
 <div id="plot-2-plot-results-for-top-10-event-types-by-year" class="section level5">
 <h5>PLOT 2: Plot results for top 10 Event Types, by Year</h5>
 <pre class="r"><code>par(mfrow = c(1, 1), mar = c(5, 4, 2, 1), oma = c(0, 0, 2, 0))
@@ -673,7 +759,9 @@ fatality.max &lt;- aggregate(FATALITIES ~ EVENT_TYPE, data = event.fatality,
 <h5>EXHIBIT 5: Economic Outlier Adjustment (Top 20 Event Types)</h5>
 <p>This table provides a comparison before and after the outlier adjustment to Total Damage for each Event Type. The year representing the outlier Total Damage is adjusted to reflect the average Total Damage across all reported years of the event type.</p>
 <p>FLOOD still has the greatest economic consequence, but less significantly over the next highest total damage after outlier adjustment. It is worth noting that the outlier adjustment applied to each of the event types. Hurricane (Typhoon) is another Event Type where the outlier adjustment made a significant change in Total Damage.</p>
-<p>This table lists comparison of economic consequences for each event type: 1. Compares Total Damages inclusive of outlier, before adjustment [TTL_INIT] 2. Total Damages with outliers adjusted to mean [TTL_ADJ], in descending order</p>
+<p>This table lists comparison of economic consequences for each event type:<br />
+1. Compares Total Damages inclusive of outlier, before adjustment [TTL_INIT]<br />
+2. Total Damages with outliers adjusted to mean [TTL_ADJ], in descending order</p>
 <pre class="r"><code>economic.adj &lt;- merge(economic.mean, economic.max, by = &quot;EVENT_TYPE&quot;)
 economic.adj &lt;- select(economic.adj, EVENT_TYPE, TTLDMG.x, TTLDMG.y)
 economic.adj &lt;- setnames(economic.adj, old = c(&quot;EVENT_TYPE&quot;, &quot;TTLDMG.x&quot;, &quot;TTLDMG.y&quot;),
@@ -687,7 +775,8 @@ economic.adj.smry &lt;-
       select(economic.adj, EVENT_TYPE, TTLDMG, TTLDMG_ADJ) %&gt;%
       group_by(EVENT_TYPE) %&gt;%
       summarize(TTL_INIT = sum(TTLDMG), TTL_ADJ = sum(TTLDMG_ADJ))
-economic.adj.smry &lt;- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]</code></pre>
+economic.adj.smry &lt;- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]
+economic.adj.smry[1:20,]</code></pre>
 <pre><code>## # A tibble: 20 × 3
 ##                 EVENT_TYPE     TTL_INIT     TTL_ADJ
 ##                      &lt;chr&gt;        &lt;dbl&gt;       &lt;dbl&gt;
@@ -716,7 +805,9 @@ economic.adj.smry &lt;- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decre
 <h5>EXHIBIT 6: Fatality Outlier Adjustment (Top 20 Event Type)</h5>
 <p>This table provides a comparison before and after the outlier adjustment to FATALITIES for each Event Type. Similar to the adjustement to Toal Damange, the year representing the outlier FATALITIES is adjusted to reflect the average FATALITIES across all reported years of the event type.</p>
 <p>EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of fatalities, for the event type between 1990 - 2011.</p>
-<p>This table lists comparison of fatalities for each event type: 1. Compares Total Fatalities inclusive of outlier, before adjustment [TTL_INIT] 2. Total Fatalities with outliers adjusted to mean [TTL_ADJ], in descending order</p>
+<p>This table lists comparison of fatalities for each event type:<br />
+1. Compares Total Fatalities inclusive of outlier, before adjustment [TTL_INIT]<br />
+2. Total Fatalities with outliers adjusted to mean [TTL_ADJ], in descending order</p>
 <pre class="r"><code>fatality.adj &lt;- merge(fatality.mean, fatality.max, by = &quot;EVENT_TYPE&quot;)
 fatality.adj &lt;- select(fatality.adj, EVENT_TYPE, FATALITIES.x, FATALITIES.y)
 fatality.adj &lt;- setnames(fatality.adj, old = c(&quot;EVENT_TYPE&quot;, &quot;FATALITIES.x&quot;, &quot;FATALITIES.y&quot;),
@@ -730,7 +821,8 @@ fatality.adj.smry &lt;-
       group_by(EVENT_TYPE) %&gt;%
       summarize(FATALITY_INIT = sum(FATALITIES), FATALITY_ADJ = sum(FATALITY_ADJ))
 fatality.adj.smry &lt;- fatality.adj.smry[order(fatality.adj.smry$FATALITY_ADJ, 
-                                                            decreasing = TRUE),]</code></pre>
+                                                            decreasing = TRUE),]
+fatality.adj.smry[1:20,]</code></pre>
 <pre><code>## # A tibble: 20 × 3
 ##                 EVENT_TYPE FATALITY_INIT FATALITY_ADJ
 ##                      &lt;chr&gt;         &lt;dbl&gt;        &lt;dbl&gt;

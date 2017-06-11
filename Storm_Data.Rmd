@@ -8,7 +8,7 @@ output:
 ---
 
 ## Packages for Course 5 Project 2
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 ipak <- function(pkg){
       new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
       if (length(new.pkg)) 
@@ -49,12 +49,12 @@ StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ","
 
 #### EXHIBIT 1: Overview of data file  
 ###### File Dimensions
-```{r file_dimensions, echo = FALSE}
+```{r file_dimensions, echo = TRUE}
 dim(StormData)
 ```
 
 ###### Variable Names & Formats
-```{r data_names_formats, echo = FALSE}
+```{r data_names_formats, echo = TRUE}
 str(StormData)
 ```
 
@@ -146,22 +146,22 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
 
 #### EXHIBIT 2: Overview of data subset  
 ##### Data Subset Dimensions  
-```{r data_subset_dimensions, echo = FALSE}
+```{r data_subset_dimensions, echo = TRUE}
 dim(subStormData)
 ```
 
 ##### Variable Names & Formats in Data Subset  
-```{r data_subset_names_formats, echo = FALSE}
+```{r data_subset_names_formats, echo = TRUE}
 str(subStormData)
 ```
 
 
 #### Standardize Dollar Amounts  
-To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
-example, the dollar amounts for property damage are expressed in different denomiations  
-(e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
-so that dollars can be combined, or summed, for different levels of aggregation, as  
-appropriate.
+To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an 
+example, the dollar amounts for property damage are expressed in different denomiations 
+(e.g. thousand vs. millions of dollars).  It is important to define a consistent measure 
+so that dollars can be combined, or summed, for different levels of aggregation, as 
+appropriate. 
 ```{r economic_measure, include = TRUE}
 subStormData$PROPDMG <- subStormData$PROPDMG * 
                         ifelse(subStormData$PROPDMGEXP %in% c("h","H"), 100,
@@ -178,7 +178,7 @@ subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 ```
 
 #### Standardizing Event Type
-```{r unique_evtype_in_data, echo = FALSE}
+```{r unique_evtype_in_data, echo = TRUE}
 events <- length(unique(subStormData$EVTYPE))
 ```
 In the dataset provided, there are `r events` unique EVTYPE, defining the types of events 
@@ -340,11 +340,10 @@ sub.obs <- length(subStormData$EVENT_TYPE)   ## Total observations in data subse
 pct.other <- round((other.obs / sub.obs) * 100, digits = 1)   ## % in 'Other Event'
 ```
 
-The mapping, or cross-walk, logic outlined above reduces the `r events` unique events originally  
-defined in the Storm Data subset, subStormData, to only `r unique.events`.  
-This includes 41 of the 48 defined event types plus a catch-all 'Other Event' category.  
-Only `r pct.other` of the events, or observations, were not assigned to a specific 
-category, but 'Other Event'.
+The mapping, or cross-walk, logic outlined above reduces the `r events` unique events originally 
+defined in the Storm Data subset, subStormData, to only `r unique.events`. This includes 41 
+of the 48 defined event types plus a catch-all 'Other Event' category. Only `r pct.other` of 
+the events, or observations, were not assigned to a specific category, but 'Other Event'.
 
 
 ### Results / Analysis
@@ -394,10 +393,10 @@ observations of an event and the average damage cost per reported observation be
 total economic consequence for this period, there are several other events that create 
 a higher average damage cost per report occurrence.
 
-This exhibit lists the total damage for each event type.  A few notes about the chart
-1. Results listed in descending order based on Total Damage, TTL_Millions
-2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.  
-3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.
+This exhibit lists the total damage for each event type.  A few notes about the chart:  
+1. Results listed in descending order based on Total Damage, TTL_Millions  
+2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.    
+3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.  
 
 ```{r economic_consequence_report, echo = TRUE}
 economic.report <- merge(economic.sum, economic.mean, by = "EVENT_TYPE")
@@ -457,10 +456,10 @@ Excessive Heat represents the greatest hazard to population health.  If injuries
 considered, Tornados, may be thought to represent a greater hazard to population health 
 due to the significantly higher reported injuries.
 
-Event Types reported in this table are:
+Event Types reported in this table are:  
 1. Based on total number of reported fatalities, descending order.  
 2. Average number of fatalities in each event occurrence.  
-3. Total number of injuries
+3. Total number of injuries  
 
 ```{r hazard_population_health_review, echo = TRUE}
 event.fatality <- merge(fatality.sum, fatality.mean, by = "EVENT_TYPE")
@@ -507,7 +506,7 @@ In PLOT 2 below, the information, Total Damages, is illustrated for each year of
 Top 10 Event Types.  The key observation of these plots is how outliers may be influencing 
 our results.
 
-```{r plot_by_year_data_smry, echo = FALSE}
+```{r plot_by_year_data_smry, echo = TRUE}
 top10DMG <- c(economic.sum10$EVENT_TYPE)
 event.dmg <- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
                                     FUN = function(x) sum=sum(x))
@@ -566,9 +565,9 @@ highest total damage after outlier adjustment.  It is worth noting that the outl
 adjustment applied to each of the event types.  Hurricane (Typhoon) is another Event Type 
 where the outlier adjustment made a significant change in Total Damage.
 
-This table lists comparison of economic consequences for each event type:
-1. Compares Total Damages inclusive of outlier, before adjustment  [TTL_INIT]
-2. Total Damages with outliers adjusted to mean  [TTL_ADJ], in descending order
+This table lists comparison of economic consequences for each event type:  
+1. Compares Total Damages inclusive of outlier, before adjustment  [TTL_INIT]  
+2. Total Damages with outliers adjusted to mean  [TTL_ADJ], in descending order  
 
 ```{r economic.adjust, include = TRUE}
 economic.adj <- merge(economic.mean, economic.max, by = "EVENT_TYPE")
@@ -585,9 +584,6 @@ economic.adj.smry <-
       group_by(EVENT_TYPE) %>%
       summarize(TTL_INIT = sum(TTLDMG), TTL_ADJ = sum(TTLDMG_ADJ))
 economic.adj.smry <- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]
-```
-
-```{r economic_adjust_table, echo = FALSE}
 economic.adj.smry[1:20,]
 ```
 
@@ -601,9 +597,9 @@ years of the event type.
 EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
 fatalities, for the event type between 1990 - 2011.
 
-This table lists comparison of fatalities for each event type:
-1. Compares Total Fatalities inclusive of outlier, before adjustment  [TTL_INIT]
-2. Total Fatalities with outliers adjusted to mean  [TTL_ADJ], in descending order
+This table lists comparison of fatalities for each event type:  
+1. Compares Total Fatalities inclusive of outlier, before adjustment  [TTL_INIT]  
+2. Total Fatalities with outliers adjusted to mean  [TTL_ADJ], in descending order  
 
 ```{r fatality.adjust, include = TRUE}
 fatality.adj <- merge(fatality.mean, fatality.max, by = "EVENT_TYPE")
@@ -620,9 +616,6 @@ fatality.adj.smry <-
       summarize(FATALITY_INIT = sum(FATALITIES), FATALITY_ADJ = sum(FATALITY_ADJ))
 fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_ADJ, 
                                                             decreasing = TRUE),]
-```
-
-```{r fatality_adjust_table, echo = FALSE}
 fatality.adj.smry[1:20,]
 ```
 

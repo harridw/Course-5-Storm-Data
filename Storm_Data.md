@@ -4,6 +4,182 @@ EHarris
 
 ## Packages for Course 5 Project 2
 
+```r
+ipak <- function(pkg){
+      new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+      if (length(new.pkg)) 
+            install.packages(new.pkg, dependencies = TRUE)
+      sapply(pkg, require, character.only = TRUE)
+}
+
+### Package Usage
+packages <- c("plyr", "dplyr", "data.table", "dtplyr", "lubridate", "ggplot2", "scales",
+                  "reshape2", "knitr", "R.cache", "stringr", "gtools", "quantreg")
+ipak(packages)
+```
+
+```
+## Loading required package: plyr
+```
+
+```
+## Loading required package: dplyr
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:plyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Loading required package: data.table
+```
+
+```
+## -------------------------------------------------------------------------
+```
+
+```
+## data.table + dplyr code now lives in dtplyr.
+## Please library(dtplyr)!
+```
+
+```
+## -------------------------------------------------------------------------
+```
+
+```
+## 
+## Attaching package: 'data.table'
+```
+
+```
+## The following objects are masked from 'package:dplyr':
+## 
+##     between, first, last
+```
+
+```
+## Loading required package: dtplyr
+```
+
+```
+## Loading required package: lubridate
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+```
+
+```
+## The following objects are masked from 'package:data.table':
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year
+```
+
+```
+## The following object is masked from 'package:plyr':
+## 
+##     here
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     date
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```
+## Loading required package: scales
+```
+
+```
+## Loading required package: reshape2
+```
+
+```
+## 
+## Attaching package: 'reshape2'
+```
+
+```
+## The following objects are masked from 'package:data.table':
+## 
+##     dcast, melt
+```
+
+```
+## Loading required package: knitr
+```
+
+```
+## Loading required package: R.cache
+```
+
+```
+## R.cache v0.12.0 (2015-11-12) successfully loaded. See ?R.cache for help.
+```
+
+```
+## Loading required package: stringr
+```
+
+```
+## Loading required package: gtools
+```
+
+```
+## Loading required package: quantreg
+```
+
+```
+## Loading required package: SparseM
+```
+
+```
+## 
+## Attaching package: 'SparseM'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     backsolve
+```
+
+```
+##       plyr      dplyr data.table     dtplyr  lubridate    ggplot2 
+##       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+##     scales   reshape2      knitr    R.cache    stringr     gtools 
+##       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+##   quantreg 
+##       TRUE
+```
 
 ## Synopsis
 Due to the different types, and serverity, of events experienced throughout a country, 
@@ -34,11 +210,19 @@ StormData <- read.csv("repdata-data-StormData.csv.bz2", header = TRUE, sep = ","
 #### EXHIBIT 1: Overview of data file  
 ###### File Dimensions
 
+```r
+dim(StormData)
+```
+
 ```
 ## [1] 902297     37
 ```
 
 ###### Variable Names & Formats
+
+```r
+str(StormData)
+```
 
 ```
 ## 'data.frame':	902297 obs. of  37 variables:
@@ -169,11 +353,19 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
 #### EXHIBIT 2: Overview of data subset  
 ##### Data Subset Dimensions  
 
+```r
+dim(subStormData)
+```
+
 ```
 ## [1] 751740     18
 ```
 
 ##### Variable Names & Formats in Data Subset  
+
+```r
+str(subStormData)
+```
 
 ```
 ## 'data.frame':	751740 obs. of  18 variables:
@@ -199,11 +391,11 @@ subStormData <- subStormData[order(subStormData$STATE, subStormData$COUNTYNAME,
 
 
 #### Standardize Dollar Amounts  
-To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an  
-example, the dollar amounts for property damage are expressed in different denomiations  
-(e.g. thousand vs. millions of dollars).  It is important to define a consistent measure  
-so that dollars can be combined, or summed, for different levels of aggregation, as  
-appropriate.
+To facilitate analysis, it is necessary to modify the orginal data in some cases.  As an 
+example, the dollar amounts for property damage are expressed in different denomiations 
+(e.g. thousand vs. millions of dollars).  It is important to define a consistent measure 
+so that dollars can be combined, or summed, for different levels of aggregation, as 
+appropriate. 
 
 ```r
 subStormData$PROPDMG <- subStormData$PROPDMG * 
@@ -222,6 +414,9 @@ subStormData <- select(subStormData, -c(PROPDMGEXP, CROPDMGEXP))
 
 #### Standardizing Event Type
 
+```r
+events <- length(unique(subStormData$EVTYPE))
+```
 In the dataset provided, there are 985 unique EVTYPE, defining the types of events 
 that have occurred.  According to the National Weather Service Instruction 10-165 
 released on August 17, 2007, events should fit into one of 48 event types or categories  
@@ -382,11 +577,10 @@ sub.obs <- length(subStormData$EVENT_TYPE)   ## Total observations in data subse
 pct.other <- round((other.obs / sub.obs) * 100, digits = 1)   ## % in 'Other Event'
 ```
 
-The mapping, or cross-walk, logic outlined above reduces the 985 unique events originally  
-defined in the Storm Data subset, subStormData, to only 42.  
-This includes 41 of the 48 defined event types plus a catch-all 'Other Event' category.  
-Only 3.9 of the events, or observations, were not assigned to a specific 
-category, but 'Other Event'.
+The mapping, or cross-walk, logic outlined above reduces the 985 unique events originally 
+defined in the Storm Data subset, subStormData, to only 42. This includes 41 
+of the 48 defined event types plus a catch-all 'Other Event' category. Only 3.9 of 
+the events, or observations, were not assigned to a specific category, but 'Other Event'.
 
 
 ### Results / Analysis
@@ -438,10 +632,10 @@ observations of an event and the average damage cost per reported observation be
 total economic consequence for this period, there are several other events that create 
 a higher average damage cost per report occurrence.
 
-This exhibit lists the total damage for each event type.  A few notes about the chart
-1. Results listed in descending order based on Total Damage, TTL_Millions
-2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.  
-3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.
+This exhibit lists the total damage for each event type.  A few notes about the chart:  
+1. Results listed in descending order based on Total Damage, TTL_Millions  
+2. TTL_Millions reflects total damages for the event throughout the entire timeline, 1990 - 2011.    
+3. AVG_THSND represents the average cost for a reported event, reported in thousands of dollars.  
 
 
 ```r
@@ -550,10 +744,10 @@ Excessive Heat represents the greatest hazard to population health.  If injuries
 considered, Tornados, may be thought to represent a greater hazard to population health 
 due to the significantly higher reported injuries.
 
-Event Types reported in this table are:
+Event Types reported in this table are:  
 1. Based on total number of reported fatalities, descending order.  
 2. Average number of fatalities in each event occurrence.  
-3. Total number of injuries
+3. Total number of injuries  
 
 
 ```r
@@ -656,6 +850,18 @@ Top 10 Event Types.  The key observation of these plots is how outliers may be i
 our results.
 
 
+```r
+top10DMG <- c(economic.sum10$EVENT_TYPE)
+event.dmg <- aggregate(TTLDMG ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.dmg10 <- subset(event.dmg, EVENT_TYPE %in% c(top10DMG))
+event.dmg10$DMG_AMT <- round(event.dmg10$TTLDMG / 1000000, digits = 3)
+
+top10Fatality <- c(fatality.sum10$EVENT_TYPE)
+event.fatality <- aggregate(FATALITIES ~ BGN_YEAR + EVENT_TYPE, data = subStormData, 
+                                    FUN = function(x) sum=sum(x))
+event.fatality10 <- subset(event.fatality, EVENT_TYPE %in% c(top10Fatality))
+```
 
 ##### PLOT 2: Plot results for top 10 Event Types, by Year
 
@@ -707,9 +913,9 @@ highest total damage after outlier adjustment.  It is worth noting that the outl
 adjustment applied to each of the event types.  Hurricane (Typhoon) is another Event Type 
 where the outlier adjustment made a significant change in Total Damage.
 
-This table lists comparison of economic consequences for each event type:
-1. Compares Total Damages inclusive of outlier, before adjustment  [TTL_INIT]
-2. Total Damages with outliers adjusted to mean  [TTL_ADJ], in descending order
+This table lists comparison of economic consequences for each event type:  
+1. Compares Total Damages inclusive of outlier, before adjustment  [TTL_INIT]  
+2. Total Damages with outliers adjusted to mean  [TTL_ADJ], in descending order  
 
 
 ```r
@@ -727,8 +933,8 @@ economic.adj.smry <-
       group_by(EVENT_TYPE) %>%
       summarize(TTL_INIT = sum(TTLDMG), TTL_ADJ = sum(TTLDMG_ADJ))
 economic.adj.smry <- economic.adj.smry[order(economic.adj.smry$TTL_ADJ, decreasing = TRUE),]
+economic.adj.smry[1:20,]
 ```
-
 
 ```
 ## # A tibble: 20 × 3
@@ -766,9 +972,9 @@ years of the event type.
 EXCESSIVE HEAT remains the greatest hazard to population health, as defined by number of 
 fatalities, for the event type between 1990 - 2011.
 
-This table lists comparison of fatalities for each event type:
-1. Compares Total Fatalities inclusive of outlier, before adjustment  [TTL_INIT]
-2. Total Fatalities with outliers adjusted to mean  [TTL_ADJ], in descending order
+This table lists comparison of fatalities for each event type:  
+1. Compares Total Fatalities inclusive of outlier, before adjustment  [TTL_INIT]  
+2. Total Fatalities with outliers adjusted to mean  [TTL_ADJ], in descending order  
 
 
 ```r
@@ -786,8 +992,8 @@ fatality.adj.smry <-
       summarize(FATALITY_INIT = sum(FATALITIES), FATALITY_ADJ = sum(FATALITY_ADJ))
 fatality.adj.smry <- fatality.adj.smry[order(fatality.adj.smry$FATALITY_ADJ, 
                                                             decreasing = TRUE),]
+fatality.adj.smry[1:20,]
 ```
-
 
 ```
 ## # A tibble: 20 × 3
