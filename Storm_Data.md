@@ -651,16 +651,16 @@ economic consequence and 'Excessive Heat' the greatest hazard to population heal
 helpful to understand how these results might fluctuate by year, year associated with the 
 reported BGN_DATE of an Event.
 
-In PLOT 2 below, the information, Total Damage & Total Fatalities, is illustrated for 
-each year of the Top 10 Event Types.  The key observation of these plots is how outliers 
-may be influencing our results.
+In PLOT 2 below, the information, Total Damages, is illustrated for each year of the 
+Top 10 Event Types.  The key observation of these plots is how outliers may be influencing 
+our results.
 
 
 
 ##### PLOT 2: Plot results for top 10 Event Types, by Year
 
 ```r
-par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+par(mfrow = c(1, 1), mar = c(5, 4, 2, 1), oma = c(0, 0, 2, 0))
 ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_TYPE)) +
                   geom_line() +
                   geom_point() +
@@ -669,16 +669,6 @@ ggplot(event.dmg10, aes(x=BGN_YEAR, y=DMG_AMT, group=EVENT_TYPE, colour = EVENT_
 ```
 
 ![](figure/plot_event_by_year-1.png)<!-- -->
-
-```r
-ggplot(event.fatality10, aes(x=BGN_YEAR, y=FATALITIES, group=EVENT_TYPE, colour = EVENT_TYPE)) +
-                  geom_line() +
-                  geom_point() +
-                  labs(title = "Total Fatalities for Top 10 Events") +
-                  labs(x = "Measurement Year", y = "Total Fatalities")
-```
-
-![](figure/plot_event_by_year-2.png)<!-- -->
 
 #### Adjusting for Outlier
 Removing, or adjusting for, the outlier year provides a new perspective to look at the 
